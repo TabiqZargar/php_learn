@@ -1101,9 +1101,25 @@ button {
 }
 
 .program-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
   margin-top: 16px;
   padding-top: 12px;
   border-top: 1px solid #e2e2dc;
+}
+
+.program-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.practice-hint-text {
+  font-size: 11px;
+  color: #6a7b92;
 }
 
 .pager-nav {
@@ -1162,6 +1178,348 @@ button {
 
   .home-actions {
     flex-direction: column;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Practice interface                                                   */
+/* ------------------------------------------------------------------ */
+
+.practice-window {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+  background: var(--chrome-face);
+  overflow: hidden;
+}
+
+.practice-header {
+  flex: 0 0 auto;
+}
+
+.practice-header h1 {
+  margin: 0 0 2px;
+  font-size: 17px;
+  color: #12355f;
+}
+
+.practice-header-sub {
+  margin: 0;
+  font-size: 11px;
+  color: #6a7b92;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.practice-grid {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(230px, 300px) 1fr;
+  gap: 10px;
+}
+
+.practice-left {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.practice-pane {
+  padding: 10px 12px;
+  border: 1px solid var(--chrome-line);
+  border-radius: 3px;
+  background: linear-gradient(180deg, #fbfaf5 0%, #f3f1ea 100%);
+}
+
+.practice-pane-title {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #0d3f8f;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.practice-text {
+  margin: 0 0 10px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: #2b2b2b;
+}
+
+.practice-pane-sub {
+  margin: 10px 0 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #152a4e;
+}
+
+.practice-concepts {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.practice-concepts li {
+  margin: 2px 0;
+  font-size: 12px;
+  color: #2f3c18;
+}
+
+.practice-concepts li::before {
+  content: "\2713  ";
+  color: #1e7a1e;
+  font-weight: 700;
+}
+
+.practice-input {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 8px;
+}
+
+.practice-input:last-child {
+  margin-bottom: 0;
+}
+
+.practice-input-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #152a4e;
+}
+
+.practice-input .xp-input {
+  width: 100%;
+  margin: 0;
+}
+
+.practice-input-hint {
+  font-size: 11px;
+  color: #6a7b92;
+}
+
+.practice-right {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.practice-code-head {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.practice-code-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #0d3f8f;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.practice-controls {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.practice-unavailable p {
+  margin: 0;
+  font-size: 13px;
+  color: #40577a;
+}
+
+.practice-output {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  max-height: 148px;
+  border: 1px solid var(--chrome-line);
+  border-radius: 3px;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.practice-output-title {
+  flex: 0 0 auto;
+  padding: 3px 8px;
+  background: linear-gradient(180deg, #e2e6ec 0%, #d2d9e2 60%, #c9d1dc 100%);
+  border-bottom: 1px solid #a7b0bd;
+  font-size: 11px;
+  font-weight: 700;
+  color: #2c323c;
+  letter-spacing: 0.4px;
+}
+
+.practice-output-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 8px 12px;
+  font-size: 12.5px;
+  color: #2b2b2b;
+}
+
+.practice-output-body p {
+  margin: 4px 0;
+  white-space: pre-wrap;
+}
+
+.practice-output-hint {
+  color: #6a7b92;
+}
+
+.practice-result {
+  white-space: pre-line;
+}
+
+.practice-result.is-neutral {
+  color: #40577a;
+}
+
+.practice-result.is-success {
+  color: #1e7a1e;
+}
+
+.practice-result.is-error {
+  color: #a1241b;
+}
+
+.practice-result.is-timeout {
+  color: #a15a1b;
+}
+
+pre.practice-stdout {
+  margin: 4px 0;
+  font-family: var(--font-code);
+  font-size: 12.5px;
+  white-space: pre-wrap;
+}
+
+/* ------------------------------------------------------------------ */
+/* Code editor                                                          */
+/* ------------------------------------------------------------------ */
+
+.editor-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.editor-toolbar .xp-button {
+  min-height: 24px;
+  padding: 1px 12px;
+  font-size: 11px;
+}
+
+.editor-toast {
+  font-size: 11px;
+  font-weight: 700;
+  color: #1e7a1e;
+}
+
+.editor {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--chrome-edge-dark);
+  border-radius: 3px;
+  background: #ffffff;
+  box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+}
+
+.editor:focus-within {
+  border-color: #235be0;
+}
+
+.editor-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: flex-start;
+  overflow: auto;
+}
+
+.editor-gutter {
+  flex: 0 0 auto;
+  padding: 9px 7px 9px 10px;
+  background: #f2f1eb;
+  border-right: 1px solid #d8d6cc;
+  text-align: right;
+  user-select: none;
+}
+
+.editor-line-no {
+  font-family: var(--font-code);
+  font-size: 13px;
+  line-height: 1.6;
+  color: #8b94a5;
+}
+
+.editor-wrap {
+  position: relative;
+  min-width: 340px;
+  min-height: 180px;
+}
+
+.editor-sizer {
+  margin: 0;
+  padding: 9px 12px;
+  font-family: var(--font-code);
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre;
+  color: transparent;
+  overflow: hidden;
+}
+
+.editor-textarea {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 9px 12px;
+  border: 0;
+  background: transparent;
+  font-family: var(--font-code);
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre;
+  resize: none;
+  overflow: hidden;
+  color: #1f2430;
+  caret-color: #12355f;
+}
+
+.editor-textarea:focus {
+  outline: 1px dotted #000;
+  outline-offset: -2px;
+}
+
+@media (max-width: 760px) {
+  .practice-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+  }
+
+  .practice-left {
+    max-height: 34vh;
   }
 }
 

@@ -2,6 +2,7 @@
  * Shared, strongly typed models for the learning content layer.
  * UI components consume these types only — content lives in src/content.
  */
+import type { PracticeConfig } from "@/lib/practice/types";
 
 export type LessonCategory = "basics";
 
@@ -55,5 +56,9 @@ export interface Program {
   expectedOutput?: string;
   explanation: string;
   notes?: string[];
+  /** Practice workspace for this program (present = Practice mode supported). */
+  practice?: PracticeConfig;
+  /** Optional guided hints, intended for a later phase. */
+  hints?: string[];
   // Extensions land with the execution engine: testCases, hints, solution.
 }

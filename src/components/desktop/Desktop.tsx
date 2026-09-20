@@ -8,6 +8,7 @@ import { DesktopIcon } from "./DesktopIcon";
 import { Window } from "../windows/Window";
 import { AcademyWindow } from "../learning/AcademyWindow";
 import { ProgramsWindow } from "../learning/ProgramsWindow";
+import { PracticeWindow } from "../practice/PracticeWindow";
 import { PlaceholderContent } from "../windows/PlaceholderContent";
 import { MenuBar } from "../navigation/MenuBar";
 import { StatusBar } from "../ui/StatusBar";
@@ -49,6 +50,12 @@ const DEFAULT_STYLES: Record<WindowId, CSSProperties> = {
     left: "max(6px, calc(42% - 40px))",
     top: "max(6px, calc(40vh))",
   },
+  practice: {
+    width: "min(96vw, 1000px)",
+    height: "min(calc(100vh - 40px), 640px)",
+    left: "max(4px, calc(50% - min(500px, 48vw)))",
+    top: "max(4px, calc(4vh))",
+  },
 };
 
 const TITLEBAR_ICONS: Record<WindowId, React.ReactNode> = {
@@ -56,6 +63,7 @@ const TITLEBAR_ICONS: Record<WindowId, React.ReactNode> = {
   programs: <ProgramsIcon size={16} />,
   reference: <ReferenceIcon size={16} />,
   computer: <ComputerIcon size={16} />,
+  practice: <ProgramsIcon size={16} />,
 };
 
 export function Desktop() {
@@ -79,6 +87,31 @@ export function Desktop() {
       ];
     });
     setActiveWindowId(id);
+  }, []);
+
+  const openPractice = useCallback((programSlug: string) => {
+    setStartMenuOpen(false);
+    setWindows((current) => {
+      const existing = current.find((win) => win.id === "practice");
+      if (existing) {
+        return current.map((win) =>
+          win.id === "practice"
+            ? { ...win, minimized: false, payload: { programSlug } }
+            : win,
+        );
+      }
+      return [
+        ...current,
+        {
+          id: "practice",
+          title: WINDOW_TITLES.practice,
+          minimized: false,
+          maximized: false,
+          payload: { programSlug },
+        },
+      ];
+    });
+    setActiveWindowId("practice");
   }, []);
 
   const closeWindow = useCallback((id: WindowId) => {
@@ -123,9 +156,16 @@ export function Desktop() {
   const renderContent = (win: WindowState) => {
     switch (win.id) {
       case "academy":
-        return <AcademyWindow />;
+        return <AcademyWindow onOpenPractice={(program) => openPractice(program.slug)} />;
       case "programs":
-        return <ProgramsWindow />;
+        return <ProgramsWindow onOpenPractice={(program) => openPractice(program.slug)} />;
+      case "practice":
+        return (
+          <PracticeWindow
+            key={win.payload?.programSlug ?? "none"}
+            programSlug={win.payload?.programSlug}
+          />
+        );
       case "reference":
         return (
           <PlaceholderContent
@@ -230,7 +270,9 @@ export function Desktop() {
               menuBar={win.id === "academy" ? <MenuBar /> : undefined}
               statusBar={
                 win.id === "academy" ? (
-                  <StatusBar left="Ready" right="PHP Academy — Phase 2" />
+                  <StatusBar left="Ready" right="PHP Academy — Phase 3" />
+                ) : win.id === "practice" ? (
+                  <StatusBar left="PHP Practice" right="Execution: not connected" />
                 ) : undefined
               }
               onActivate={() => activateWindow(win.id)}

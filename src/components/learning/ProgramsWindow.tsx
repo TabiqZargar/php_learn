@@ -7,11 +7,16 @@ import { SideNav } from "@/components/navigation/SideNav";
 import { ProgramList } from "./ProgramList";
 import { ProgramView } from "./ProgramView";
 
+interface ProgramsWindowProps {
+  /** Opens the practice window for a program in the desktop manager. */
+  onOpenPractice?: (program: Program) => void;
+}
+
 /**
  * The standalone Programs window: a program library browsable
  * independently from the academy. Reuses the shared list + views.
  */
-export function ProgramsWindow() {
+export function ProgramsWindow({ onOpenPractice }: ProgramsWindowProps) {
   const [selectedSlug, setSelectedSlug] = useState<string>(PROGRAMS[0].slug);
   const program = getProgramBySlug(selectedSlug);
 
@@ -38,6 +43,7 @@ export function ProgramsWindow() {
             nextLabel={nextProgram?.title}
             onPrev={prevProgram ? () => setSelectedSlug(prevProgram.slug) : undefined}
             onNext={nextProgram ? () => setSelectedSlug(nextProgram.slug) : undefined}
+            onOpenPractice={onOpenPractice}
           />
         ) : null}
       </main>

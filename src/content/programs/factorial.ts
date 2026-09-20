@@ -36,4 +36,22 @@ Recursive: 120`,
     "Any recursive function needs a base case, or it recurses forever.",
     "For very large n the integer overflows; PHP promotes to float when needed.",
   ],
+  practice: {
+    starterCode: `<?php
+
+// Return $n! where 0! and 1! are both 1.
+function factorial($n) {
+    // Your logic here
+
+    return 1; // <- replace with the correct result
+}
+
+// This value comes from the Input panel.
+$n = 5;
+
+echo "Factorial: " . factorial($n);`,
+    inputs: [
+      { name: "n", label: "Number", type: "number", value: "5", description: "Compute the factorial of this integer." },
+    ],
+  },
 };

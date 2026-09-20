@@ -12,6 +12,8 @@ interface ProgramViewProps {
   nextLabel?: string;
   onPrev?: () => void;
   onNext?: () => void;
+  /** When provided, a Practice entry opens for supported programs. */
+  onOpenPractice?: (program: Program) => void;
 }
 
 /** Renders one program: problem, concepts, code, output, explanation. */
@@ -23,6 +25,7 @@ export function ProgramView({
   nextLabel,
   onPrev,
   onNext,
+  onOpenPractice,
 }: ProgramViewProps) {
   return (
     <article>
@@ -68,9 +71,27 @@ export function ProgramView({
       ) : null}
 
       <div className="program-actions">
-        <XpButton disabled title="Running PHP is not available yet — planned for a future phase.">
-          Run (coming soon)
-        </XpButton>
+        {onOpenPractice && program.practice ? (
+          <div className="program-actions-row">
+            <XpButton
+              primary
+              onClick={() => onOpenPractice(program)}
+              aria-label={`Open ${program.title} in practice mode`}
+            >
+              Practice
+            </XpButton>
+            <span className="practice-hint-text">
+              Edit starter code, set the inputs, and run a simulated check.
+            </span>
+          </div>
+        ) : (
+          <XpButton
+            disabled
+            title="Practice mode arrives for this program in a later phase."
+          >
+            Practice (coming soon)
+          </XpButton>
+        )}
       </div>
 
       <PagerNav

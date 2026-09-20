@@ -30,4 +30,23 @@ Manual check: OK`,
     "Check the PHP manual before writing a loop — string functions cover most needs.",
     "strrev() works on single-byte characters; multibyte strings need mb_strrev-style handling.",
   ],
+  practice: {
+    starterCode: `<?php
+
+// Return $text with its characters reversed.
+function reverseString($text) {
+    // Your logic here
+
+    return $text; // <- replace with the correct result
+}
+
+// This value comes from the Input panel.
+$text = "PHP Academy";
+
+echo "Original: $text" . PHP_EOL;
+echo "Reversed: " . reverseString($text);`,
+    inputs: [
+      { name: "text", label: "Text", type: "text", value: "PHP Academy", description: "The string to reverse." },
+    ],
+  },
 };

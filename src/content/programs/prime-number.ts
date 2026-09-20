@@ -41,4 +41,22 @@ foreach ($numbers as $n) {
     "Checking only up to the square root makes the test much faster for large numbers.",
     "The early return (exit) works because one divisor is sufficient proof.",
   ],
+  practice: {
+    starterCode: `<?php
+
+// Return true when $n is prime, false otherwise.
+function isPrime($n) {
+    // Your logic here
+
+    return false; // <- replace with the correct result
+}
+
+// This value comes from the Input panel.
+$n = 7;
+
+echo $n . " is " . (isPrime($n) ? "prime" : "not prime");`,
+    inputs: [
+      { name: "n", label: "Number", type: "number", value: "7", description: "Check whether this integer is prime." },
+    ],
+  },
 };

@@ -34,4 +34,26 @@ Smallest-case: 7`,
     "A running maximum is a common pattern: start with a candidate, then refine it.",
     "The solution scales to any number of inputs if you loop over them.",
   ],
+  practice: {
+    starterCode: `<?php
+
+// Return the largest of three numbers.
+function largest($a, $b, $c) {
+    // Your logic here
+
+    return $a; // <- replace with the correct result
+}
+
+// These values come from the Input panel.
+$a = 10;
+$b = 25;
+$c = 15;
+
+echo "Largest number: " . largest($a, $b, $c);`,
+    inputs: [
+      { name: "a", label: "First number", type: "number", value: "10", description: "The first integer to compare." },
+      { name: "b", label: "Second number", type: "number", value: "25", description: "The second integer to compare." },
+      { name: "c", label: "Third number", type: "number", value: "15", description: "The third integer to compare." },
+    ],
+  },
 };

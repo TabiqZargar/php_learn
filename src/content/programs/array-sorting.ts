@@ -31,4 +31,22 @@ Descending: 8 6 4 3 2 1`,
     "sort() keeps integer keys, which is why a numeric-list foreach reads cleanly.",
     "For associative arrays use asort()/arsort() to keep key-value pairs intact.",
   ],
+  practice: {
+    starterCode: `<?php
+
+// Return the array sorted in ascending order.
+function sortNumbers($numbers) {
+    // Your logic here
+
+    return $numbers; // <- replace with the correct result
+}
+
+// This value comes from the Input panel.
+$numbers = [4, 2, 8, 1, 3, 6];
+
+echo "Sorted: " . implode(" ", sortNumbers($numbers));`,
+    inputs: [
+      { name: "numbers", label: "Numbers", type: "text", value: "[4, 2, 8, 1, 3, 6]", description: "Array as comma-separated values, e.g. [4, 2, 8, 1, 3, 6]." },
+    ],
+  },
 };

@@ -31,4 +31,22 @@ Converted 'PHP Academy!' to lowercase: php academy!`,
     "=== treats 'PHP' and 'php' as different strings; == would too for strings, but === is the explicit choice here.",
     "strtoupper() is the mirrored function for the reverse operation.",
   ],
+  practice: {
+    starterCode: `<?php
+
+// Return a lowercase copy of $text.
+function toLowercase($text) {
+    // Your logic here
+
+    return $text; // <- replace with the correct result
+}
+
+// This value comes from the Input panel.
+$text = "PHP Academy!";
+
+echo "Converted: " . toLowercase($text);`,
+    inputs: [
+      { name: "text", label: "Text", type: "text", value: "PHP Academy!", description: "The string to convert to lowercase." },
+    ],
+  },
 };

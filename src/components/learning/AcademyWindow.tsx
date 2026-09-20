@@ -10,11 +10,16 @@ import { CourseHome } from "./CourseHome";
 
 type ActiveView = "home" | "lesson" | "program";
 
+interface AcademyWindowProps {
+  /** Opens the practice window for a program in the desktop manager. */
+  onOpenPractice?: (program: Program) => void;
+}
+
 /**
  * The PHP Academy window: XP side-pane navigation over the lesson and
  * program content, with a white reading pane. State is local only.
  */
-export function AcademyWindow() {
+export function AcademyWindow({ onOpenPractice }: AcademyWindowProps) {
   const [activeView, setActiveView] = useState<ActiveView>("lesson");
   const [selectedSlug, setSelectedSlug] = useState<string>(FIRST_LESSON.slug);
 
@@ -78,6 +83,7 @@ export function AcademyWindow() {
             nextLabel={nextProgram?.title}
             onPrev={prevProgram ? () => selectProgram(prevProgram.slug) : undefined}
             onNext={nextProgram ? () => selectProgram(nextProgram.slug) : undefined}
+            onOpenPractice={onOpenPractice}
           />
         ) : null}
       </main>
