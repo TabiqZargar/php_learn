@@ -30,8 +30,8 @@ Manual check: OK`,
     "Check the PHP manual before writing a loop — string functions cover most needs.",
     "strrev() works on single-byte characters; multibyte strings need mb_strrev-style handling.",
   ],
-  practice: {
-    starterCode: `<?php
+practice: {
+      starterCode: `<?php
 
 // Return $text with its characters reversed.
 function reverseString($text) {
@@ -40,8 +40,8 @@ function reverseString($text) {
     return $text; // <- replace with the correct result
 }
 
-// This value comes from the Input panel.
-$text = "PHP Academy";
+// The input from the Input panel arrives as a CLI argument.
+$text = $argv[1];
 
 echo "Original: $text" . PHP_EOL;
 echo "Reversed: " . reverseString($text);`,

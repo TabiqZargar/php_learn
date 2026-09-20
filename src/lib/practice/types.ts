@@ -1,6 +1,7 @@
 /**
- * Practice input/output model — designed so a future execution engine
- * can consume it directly. Nothing here executes PHP.
+ * Practice input/output model — consumed by the client UI, the API route
+ * and the local PHP runner. All values must stay JSON-serializable so
+ * results round-trip through the HTTP endpoint untouched.
  */
 
 export type PracticeInputType = "text" | "number";
@@ -24,7 +25,16 @@ export interface PracticeConfig {
   inputs: PracticeInput[];
 }
 
-export type PracticeResultStatus = "success" | "error" | "timeout" | "not_implemented";
+export type PracticeResultStatus =
+  | "success"
+  | "runtime_error"
+  | "syntax_error"
+  | "timeout"
+  | "output_limit"
+  | "runtime_unavailable"
+  | "execution_disabled"
+  | "invalid_request"
+  | "not_implemented";
 
 export interface PracticeResult {
   status: PracticeResultStatus;
@@ -37,5 +47,5 @@ export interface PracticeResult {
 }
 
 export interface PracticeRunner {
-  run(code: string, inputs: PracticeInput[]): PracticeResult;
+  run(code: string, inputs: PracticeInput[]): Promise<PracticeResult>;
 }

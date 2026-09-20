@@ -40,6 +40,7 @@ export function PracticeWindow({ programSlug }: PracticeWindowProps) {
     defaultInputValues(practice),
   );
   const [result, setResult] = useState<PracticeResult | null>(null);
+  const [isRunning, setIsRunning] = useState(false);
   const [copied, setCopied] = useState(false);
   const copyTimer = useRef<number | null>(null);
 
@@ -64,8 +65,16 @@ export function PracticeWindow({ programSlug }: PracticeWindowProps) {
     value: inputValues[input.name] ?? input.value,
   }));
 
-  const handleRun = () => {
-    setResult(practiceRunner.run(code, currentInputs));
+  const handleRun = async () => {
+    if (isRunning) return;
+    setIsRunning(true);
+    setResult(null);
+    try {
+      const runResult = await practiceRunner.run(code, currentInputs);
+      setResult(runResult);
+    } finally {
+      setIsRunning(false);
+    }
   };
 
   const handleReset = () => {
@@ -133,6 +142,7 @@ export function PracticeWindow({ programSlug }: PracticeWindowProps) {
             onRun={handleRun}
             onReset={handleReset}
             canReset={codeChanged || inputsChanged}
+            running={isRunning}
           />
         </div>
       </div>

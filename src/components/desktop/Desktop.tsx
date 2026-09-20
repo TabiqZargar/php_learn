@@ -270,9 +270,9 @@ export function Desktop() {
               menuBar={win.id === "academy" ? <MenuBar /> : undefined}
               statusBar={
                 win.id === "academy" ? (
-                  <StatusBar left="Ready" right="PHP Academy — Phase 3" />
+                  <StatusBar left="Ready" right="PHP Academy — Phase 4" />
                 ) : win.id === "practice" ? (
-                  <StatusBar left="PHP Practice" right="Execution: not connected" />
+                  <StatusBar left="PHP Practice" right="Execution: local PHP CLI" />
                 ) : undefined
               }
               onActivate={() => activateWindow(win.id)}

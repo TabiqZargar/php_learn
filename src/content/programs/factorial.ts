@@ -36,8 +36,8 @@ Recursive: 120`,
     "Any recursive function needs a base case, or it recurses forever.",
     "For very large n the integer overflows; PHP promotes to float when needed.",
   ],
-  practice: {
-    starterCode: `<?php
+practice: {
+      starterCode: `<?php
 
 // Return $n! where 0! and 1! are both 1.
 function factorial($n) {
@@ -46,8 +46,8 @@ function factorial($n) {
     return 1; // <- replace with the correct result
 }
 
-// This value comes from the Input panel.
-$n = 5;
+// The input from the Input panel arrives as a CLI argument.
+$n = (int)$argv[1];
 
 echo "Factorial: " . factorial($n);`,
     inputs: [

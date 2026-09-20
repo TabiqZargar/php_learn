@@ -1402,11 +1402,37 @@ button {
   color: #a15a1b;
 }
 
+.practice-result.is-output-limit {
+  color: #a15a1b;
+}
+
 pre.practice-stdout {
   margin: 4px 0;
   font-family: var(--font-code);
   font-size: 12.5px;
   white-space: pre-wrap;
+}
+
+pre.practice-stderr {
+  margin: 4px 0;
+  font-family: var(--font-code);
+  font-size: 12.5px;
+  white-space: pre-wrap;
+  color: #a1241b;
+  background: #fdf0ef;
+  border: 1px solid #f0d6d1;
+  border-radius: 3px;
+  padding: 6px 8px;
+}
+
+.practice-result-meta {
+  color: #6a7b92;
+  font-size: 11.5px;
+}
+
+.practice-output-empty {
+  color: #6a7b92;
+  font-style: italic;
 }
 
 /* ------------------------------------------------------------------ */

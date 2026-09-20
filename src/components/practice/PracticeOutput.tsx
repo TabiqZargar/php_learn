@@ -6,9 +6,8 @@ interface PracticeOutputProps {
 
 /**
  * Bottom strip that renders the latest run result. The region is marked
- * live so screen readers announce output changes. Results are ALWAYS
- * faithful: a not_implemented status shows a plain explanation and never
- * fabricated program output.
+ * live so screen readers announce output changes. Output is ALWAYS
+ * faithful to what the runner reported — never fabricated.
  */
 export function PracticeOutput({ result }: PracticeOutputProps) {
   return (
@@ -30,37 +29,73 @@ function ResultBody({ result }: PracticeOutputProps) {
     );
   }
 
-  const tone =
-    result.status === "success"
-      ? "is-success"
-      : result.status === "error"
-        ? "is-error"
-        : result.status === "timeout"
-          ? "is-timeout"
-          : "is-neutral";
+  switch (result.status) {
+    case "success":
+      return (
+        <div className="practice-result is-success">
+          {result.stdout ? (
+            <pre className="practice-stdout">{result.stdout}</pre>
+          ) : (
+            <p className="practice-output-empty">Program produced no output.</p>
+          )}
+          <p className="practice-result-meta">
+            Completed in {result.executionTimeMs ?? "?"} ms
+            {typeof result.exitCode === "number"
+              ? ` · exit code ${result.exitCode}`
+              : ""}
+          </p>
+        </div>
+      );
 
-  if (result.status === "not_implemented") {
-    return (
-      <div className={`practice-result ${tone}`}>
-        {(result.message ?? "").split("\n").filter(Boolean).map((line) => (
-          <p key={line}>{line}</p>
-        ))}
-      </div>
-    );
+    case "syntax_error":
+    case "runtime_error":
+    case "invalid_request":
+      return (
+        <div className="practice-result is-error">
+          {result.stderr ? <pre className="practice-stderr">{result.stderr}</pre> : null}
+          {!result.stderr && result.stdout ? (
+            <pre className="practice-stderr">{result.stdout}</pre>
+          ) : null}
+          {result.message ? <p>{result.message}</p> : null}
+          {typeof result.exitCode === "number" ? (
+            <p className="practice-result-meta">Exit code {result.exitCode}</p>
+          ) : null}
+        </div>
+      );
+
+    case "timeout":
+      return (
+        <div className="practice-result is-timeout">
+          <p>{result.message ?? "The program timed out."}</p>
+          {result.stdout ? <pre className="practice-stdout">{result.stdout}</pre> : null}
+        </div>
+      );
+
+    case "output_limit":
+      return (
+        <div className="practice-result is-output-limit">
+          <p>
+            {result.message ?? "The program produced too much output and was stopped."}
+          </p>
+          {result.stdout ? <pre className="practice-stdout">{result.stdout}</pre> : null}
+        </div>
+      );
+
+    case "runtime_unavailable":
+    case "execution_disabled":
+    case "not_implemented":
+      return (
+        <div className="practice-result is-neutral">
+          {(result.message ?? "Execution is not available.")
+            .split("\n")
+            .filter(Boolean)
+            .map((line) => (
+              <p key={line}>{line}</p>
+            ))}
+        </div>
+      );
+
+    default:
+      return <p className="practice-result is-neutral">Status: {result.status}</p>;
   }
-
-  if (result.stdout) {
-    return (
-      <div className={`practice-result ${tone}`}>
-        <pre className="practice-stdout">{result.stdout}</pre>
-        {result.message ? <p>{result.message}</p> : null}
-      </div>
-    );
-  }
-
-  if (result.message) {
-    return <p className={`practice-result ${tone}`}>{result.message}</p>;
-  }
-
-  return <p className={`practice-result ${tone}`}>Status: {result.status}</p>;
 }
