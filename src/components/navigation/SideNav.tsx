@@ -2,11 +2,17 @@ import type { ReactNode } from "react";
 
 interface SideNavItemProps {
   label: string;
+  selected?: boolean;
   disabled?: boolean;
   onSelect?: () => void;
 }
 
-export function SideNavItem({ label, disabled = false, onSelect }: SideNavItemProps) {
+export function SideNavItem({
+  label,
+  selected = false,
+  disabled = false,
+  onSelect,
+}: SideNavItemProps) {
   if (disabled) {
     return (
       <span className="side-pane-item is-disabled" aria-disabled="true">
@@ -15,8 +21,16 @@ export function SideNavItem({ label, disabled = false, onSelect }: SideNavItemPr
       </span>
     );
   }
+  const classes = ["side-pane-item", selected ? "is-selected" : ""]
+    .filter(Boolean)
+    .join(" ");
   return (
-    <button type="button" className="side-pane-item" onClick={onSelect}>
+    <button
+      type="button"
+      className={classes}
+      aria-pressed={selected}
+      onClick={onSelect}
+    >
       <span className="side-pane-dot" aria-hidden="true" />
       {label}
     </button>

@@ -6,7 +6,8 @@ import type { WindowId, WindowState } from "./types";
 import { WINDOW_TITLES } from "./types";
 import { DesktopIcon } from "./DesktopIcon";
 import { Window } from "../windows/Window";
-import { AcademyContent } from "../windows/AcademyContent";
+import { AcademyWindow } from "../learning/AcademyWindow";
+import { ProgramsWindow } from "../learning/ProgramsWindow";
 import { PlaceholderContent } from "../windows/PlaceholderContent";
 import { MenuBar } from "../navigation/MenuBar";
 import { StatusBar } from "../ui/StatusBar";
@@ -31,10 +32,10 @@ const DEFAULT_STYLES: Record<WindowId, CSSProperties> = {
     top: "6px",
   },
   programs: {
-    width: "min(84vw, 400px)",
-    height: "min(56vh, 300px)",
-    left: "max(6px, calc(28% - 30px))",
-    top: "max(6px, calc(12vh))",
+    width: "min(92vw, 720px)",
+    height: "min(calc(100vh - 60px), 500px)",
+    left: "max(6px, calc(50% - min(360px, 46vw)))",
+    top: "max(6px, calc(8vh))",
   },
   reference: {
     width: "min(84vw, 420px)",
@@ -122,29 +123,9 @@ export function Desktop() {
   const renderContent = (win: WindowState) => {
     switch (win.id) {
       case "academy":
-        return (
-          <AcademyContent
-            onOpenPrograms={() => openWindow("programs")}
-            onOpenReference={() => openWindow("reference")}
-          />
-        );
+        return <AcademyWindow />;
       case "programs":
-        return (
-          <PlaceholderContent
-            icon={<ProgramsIcon size={44} />}
-            heading="Programs"
-            description="Guided PHP exercises"
-            note="The program library is planned for a later phase. Exercise authors, source views and the code editor will live here."
-            items={[
-              "Hello, World",
-              "Variables & Types",
-              "Conditions",
-              "Loops",
-              "Functions",
-              "Arrays",
-            ]}
-          />
-        );
+        return <ProgramsWindow />;
       case "reference":
         return (
           <PlaceholderContent
@@ -249,7 +230,7 @@ export function Desktop() {
               menuBar={win.id === "academy" ? <MenuBar /> : undefined}
               statusBar={
                 win.id === "academy" ? (
-                  <StatusBar left="Ready" right="PHP Academy — Phase 1" />
+                  <StatusBar left="Ready" right="PHP Academy — Phase 2" />
                 ) : undefined
               }
               onActivate={() => activateWindow(win.id)}

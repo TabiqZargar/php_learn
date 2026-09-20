@@ -76,7 +76,7 @@ export function StartMenu({ onOpen, onClose, entries }: StartMenuProps) {
           ))}
         </div>
 
-        <footer className="start-menu-foot">PHP Academy — Phase 1 shell</footer>
+        <footer className="start-menu-foot">PHP Academy — Lessons &amp; Programs</footer>
       </div>
     </>
   );

@@ -838,6 +838,29 @@ button {
   outline-offset: 1px;
 }
 
+.side-pane-item.is-selected {
+  border-color: #2a62b4;
+  background: linear-gradient(180deg, #7fb1ea 0%, #5a94dd 50%, #4078cf 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.side-pane-item.is-selected:hover {
+  border-color: #2a62b4;
+  background: linear-gradient(180deg, #8cb9ef 0%, #6399e0 50%, #4780d3 100%);
+}
+
+.side-pane-group {
+  margin-top: 8px;
+  padding: 3px 8px 2px;
+  color: #0d3f8f;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
 .side-pane-dot {
   width: 7px;
   height: 7px;
@@ -928,6 +951,218 @@ button {
   font-family: var(--font-code);
   font-size: 12px;
   color: #7a2d2d;
+}
+
+/* ------------------------------------------------------------------ */
+/* Learning interface                                                   */
+/* ------------------------------------------------------------------ */
+
+.xp-input {
+  width: 100%;
+  margin-bottom: 6px;
+  padding: 4px 6px;
+  border: 1px solid #7f9db9;
+  border-radius: 2px;
+  background: #ffffff;
+  box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.15);
+  font-size: 12px;
+  color: #1a1a1a;
+}
+
+.xp-input:focus {
+  outline: 1px dotted #0d2a54;
+  outline-offset: 1px;
+}
+
+.view-header {
+  margin-bottom: 10px;
+  border-bottom: 1px solid #d9dce0;
+  padding-bottom: 10px;
+}
+
+.view-kicker {
+  margin: 0 0 3px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #6a7b92;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.lesson-section {
+  margin-top: 14px;
+}
+
+.lesson-section h2 {
+  margin: 0 0 6px;
+  font-size: 17px;
+  font-weight: 700;
+  color: #12355f;
+}
+
+.lesson-explanation {
+  margin: 0 0 8px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #2b2b2b;
+  white-space: pre-line;
+}
+
+.lesson-notes {
+  margin: 6px 0 10px;
+  padding: 0;
+  list-style: none;
+}
+
+.lesson-notes li {
+  position: relative;
+  margin: 0 0 4px;
+  padding-left: 14px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #333333;
+}
+
+.lesson-notes li::before {
+  content: "▸";
+  position: absolute;
+  left: 0;
+  color: #2a6fc4;
+  font-weight: 700;
+}
+
+.xp-section-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 18px 0 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #12355f;
+}
+
+.xp-section-heading::after {
+  content: "";
+  flex: 1 1 auto;
+  height: 1px;
+  background: linear-gradient(90deg, #9fb6d4, #e2e7ee);
+}
+
+.code-block {
+  display: block;
+  margin: 10px 0 14px;
+  border: 1px solid #6b6b63;
+  border-radius: 3px;
+  background: #fbfbf9;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.code-block-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 3px 8px 4px;
+  background: linear-gradient(180deg, #e2e6ec 0%, #d2d9e2 60%, #c9d1dc 100%);
+  border-bottom: 1px solid #a7b0bd;
+  font-family: var(--font-code);
+  font-size: 11px;
+  font-weight: 600;
+  color: #2c323c;
+}
+
+.code-block-lang {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #5a6773;
+}
+
+.code-block-body {
+  margin: 0;
+  padding: 10px 12px;
+  overflow-x: auto;
+  font-family: var(--font-code);
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: #1f2430;
+  white-space: pre;
+  tab-size: 4;
+}
+
+.code-block-output {
+  border-top: 1px solid #d0cec1;
+}
+
+.code-block-output .code-block-body {
+  background: #f4f8ee;
+  color: #1e5c1e;
+}
+
+.program-actions {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #e2e2dc;
+}
+
+.pager-nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 18px;
+  padding-top: 12px;
+  border-top: 1px solid #d9dce0;
+}
+
+.pager-spacer {
+  flex: 1 1 auto;
+}
+
+.home-actions {
+  display: flex;
+  gap: 10px;
+  margin: 14px 0;
+}
+
+.home-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.home-card {
+  margin: 0;
+  flex-direction: column;
+}
+
+@media (max-width: 680px) {
+  .academy-layout {
+    flex-direction: column;
+  }
+
+  .side-pane {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    width: auto;
+    max-height: 148px;
+    overflow-y: auto;
+  }
+
+  .side-pane-item {
+    width: auto;
+    padding: 4px 8px;
+  }
+
+  .side-pane-group {
+    width: 100%;
+    margin: 4px 0 0;
+  }
+
+  .home-actions {
+    flex-direction: column;
+  }
 }
 
 /* ------------------------------------------------------------------ */
