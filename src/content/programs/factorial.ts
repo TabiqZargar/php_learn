@@ -54,4 +54,36 @@ echo "Factorial: " . factorial($n);`,
       { name: "n", label: "Number", type: "number", value: "5", description: "Compute the factorial of this integer." },
     ],
   },
+  testCases: [
+    {
+      id: "factorial-zero",
+      name: "Zero (0! = 1)",
+      inputs: [{ name: "n", label: "Number", type: "number", value: "0" }],
+      expectedOutput: "Factorial: 1",
+    },
+    {
+      id: "factorial-one",
+      name: "One (1! = 1)",
+      inputs: [{ name: "n", label: "Number", type: "number", value: "1" }],
+      expectedOutput: "Factorial: 1",
+    },
+    {
+      id: "factorial-three",
+      name: "Three (3! = 6)",
+      inputs: [{ name: "n", label: "Number", type: "number", value: "3" }],
+      expectedOutput: "Factorial: 6",
+    },
+    {
+      id: "factorial-five",
+      name: "Five (5! = 120)",
+      inputs: [{ name: "n", label: "Number", type: "number", value: "5" }],
+      expectedOutput: "Factorial: 120",
+    },
+    {
+      id: "factorial-ten",
+      name: "Ten (10! = 3628800)",
+      inputs: [{ name: "n", label: "Number", type: "number", value: "10" }],
+      expectedOutput: "Factorial: 3628800",
+    },
+  ],
 };

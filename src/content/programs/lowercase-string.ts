@@ -49,4 +49,30 @@ echo "Converted: " . toLowercase($text);`,
       { name: "text", label: "Text", type: "text", value: "PHP Academy!", description: "The string to convert to lowercase." },
     ],
   },
+  testCases: [
+    {
+      id: "lowercase-already",
+      name: "Already lowercase",
+      inputs: [{ name: "text", label: "Text", type: "text", value: "hello" }],
+      expectedOutput: "Converted: hello",
+    },
+    {
+      id: "lowercase-single-capital",
+      name: "Single capital letter",
+      inputs: [{ name: "text", label: "Text", type: "text", value: "Hello" }],
+      expectedOutput: "Converted: hello",
+    },
+    {
+      id: "lowercase-phrase",
+      name: "Lowercase phrase",
+      inputs: [{ name: "text", label: "Text", type: "text", value: "php academy" }],
+      expectedOutput: "Converted: php academy",
+    },
+    {
+      id: "lowercase-mixed-symbol",
+      name: "Mixed case and symbols",
+      inputs: [{ name: "text", label: "Text", type: "text", value: "PHP Academy!" }],
+      expectedOutput: "Converted: php academy!",
+    },
+  ],
 };

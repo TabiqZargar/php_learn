@@ -49,4 +49,30 @@ echo "Reversed: " . reverseString($text);`,
       { name: "text", label: "Text", type: "text", value: "PHP Academy", description: "The string to reverse." },
     ],
   },
+  testCases: [
+    {
+      id: "reverse-hello",
+      name: "Ordinary word",
+      inputs: [{ name: "text", label: "Text", type: "text", value: "hello" }],
+      expectedOutput: "Original: hello\nReversed: olleh",
+    },
+    {
+      id: "reverse-palindrome",
+      name: "Palindrome (PHP)",
+      inputs: [{ name: "text", label: "Text", type: "text", value: "PHP" }],
+      expectedOutput: "Original: PHP\nReversed: PHP",
+    },
+    {
+      id: "reverse-sentence",
+      name: "Two-word string",
+      inputs: [{ name: "text", label: "Text", type: "text", value: "PHP Academy" }],
+      expectedOutput: "Original: PHP Academy\nReversed: ymedacA PHP",
+    },
+    {
+      id: "reverse-empty",
+      name: "Empty string",
+      inputs: [{ name: "text", label: "Text", type: "text", value: "" }],
+      expectedOutput: "Original: \nReversed: ",
+    },
+  ],
 };

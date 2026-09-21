@@ -50,4 +50,30 @@ echo "Sorted: " . implode(" ", sortNumbers($numbers));`,
       { name: "numbers", label: "Numbers", type: "text", value: "[4, 2, 8, 1, 3, 6]", description: "Array as comma-separated values, e.g. [4, 2, 8, 1, 3, 6]." },
     ],
   },
+  testCases: [
+    {
+      id: "sort-unsorted",
+      name: "Unsorted list",
+      inputs: [{ name: "numbers", label: "Numbers", type: "text", value: "[3, 1, 2]" }],
+      expectedOutput: "Sorted: 1 2 3",
+    },
+    {
+      id: "sort-duplicates",
+      name: "Duplicates stay",
+      inputs: [{ name: "numbers", label: "Numbers", type: "text", value: "[5, 5, 1]" }],
+      expectedOutput: "Sorted: 1 5 5",
+    },
+    {
+      id: "sort-negative",
+      name: "Negative values",
+      inputs: [{ name: "numbers", label: "Numbers", type: "text", value: "[-2, 4, 0]" }],
+      expectedOutput: "Sorted: -2 0 4",
+    },
+    {
+      id: "sort-longer",
+      name: "Longer list",
+      inputs: [{ name: "numbers", label: "Numbers", type: "text", value: "[13, 7, 21, 4]" }],
+      expectedOutput: "Sorted: 4 7 13 21",
+    },
+  ],
 };

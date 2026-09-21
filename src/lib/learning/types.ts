@@ -2,7 +2,7 @@
  * Shared, strongly typed models for the learning content layer.
  * UI components consume these types only — content lives in src/content.
  */
-import type { PracticeConfig } from "@/lib/practice/types";
+import type { PracticeConfig, PracticeInput } from "@/lib/practice/types";
 
 export type LessonCategory = "basics";
 
@@ -40,6 +40,17 @@ export interface Lesson {
   sections: LessonSection[];
 }
 
+export interface ProgramTestCase {
+  /** Stable key referenced by the evaluation API results (no spaces). */
+  id: string;
+  /** Human-friendly label shown in the result panel (e.g. "Negative values"). */
+  name: string;
+  /** Values the student's code receives as CLI arguments, in order. */
+  inputs: PracticeInput[];
+  /** Exact output the program must print (whitespace/line-ending differences are tolerated). */
+  expectedOutput: string;
+}
+
 export interface Program {
   id: string;
   slug: string;
@@ -58,7 +69,8 @@ export interface Program {
   notes?: string[];
   /** Practice workspace for this program (present = Practice mode supported). */
   practice?: PracticeConfig;
+  /** Graded test cases for Check Solution (present = evaluation supported). */
+  testCases?: ProgramTestCase[];
   /** Optional guided hints, intended for a later phase. */
   hints?: string[];
-  // Extensions land with the execution engine: testCases, hints, solution.
 }

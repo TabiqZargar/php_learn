@@ -27,12 +27,13 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { PracticeInput, PracticeResult } from "./types";
-
-export const PHP_BIN = "php";
-export const MAX_SOURCE_BYTES = 64 * 1024;
-export const MAX_INPUT_BYTES = 16 * 1024;
-export const MAX_OUTPUT_BYTES = 64 * 1024;
-export const EXECUTION_TIMEOUT_MS = 2000;
+import {
+  EXECUTION_TIMEOUT_MS,
+  MAX_INPUT_BYTES,
+  MAX_OUTPUT_BYTES,
+  MAX_SOURCE_BYTES,
+  PHP_BIN,
+} from "./limits.ts";
 
 /** Shell env keys forwarded to the child; everything else is dropped. */
 const ENV_ALLOWLIST = [

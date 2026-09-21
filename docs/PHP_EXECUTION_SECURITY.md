@@ -9,15 +9,19 @@ mistakes this feature for a production sandbox.
 ```
 Browser (Practice UI)
    │  POST /api/practice/execute  { code, inputs }
+   │  POST /api/practice/check    { programSlug, code }
    ▼
-Next.js API route  src/app/api/practice/execute/route.ts
-   │  validates payload (shape + size limits)
+Next.js API routes  src/app/api/practice/{execute,check}/route.ts
+   │  validates payloads (shape + size limits), resolves the program
    ▼
 src/lib/practice/localPhpRunner.ts
    │  server-only, child_process.spawn()
    ▼
 local PHP CLI  (php -n … program.php arg1 …)
 ```
+
+All limits live in one place — `src/lib/practice/limits.ts` — so a reviewer sees
+the security knobs at a glance.
 
 Key properties of the local runner:
 
@@ -44,6 +48,24 @@ Key properties of the local runner:
 - **Never fabricate output.** Every result is what the process actually
   produced or an explicit status (`runtime_unavailable`,
   `execution_disabled`, `timeout`, `output_limit`, …).
+
+## Check Solution evaluation
+
+`POST /api/practice/check` grades a student's code against each program's
+`testCases` (defined in `src/content/programs/*`). Only the six locally
+executable programs carry test cases; every other program is rejected with a
+typed 400. Notable properties:
+
+- **Execution goes through the same sandbox.** The evaluator
+  (`src/lib/practice/evaluator.ts`) never spawns PHP itself — the route injects
+  `runLocalPhp`, so every case respects the same limits, temp-dir cleanup and
+  dev-only gate as Run.
+- **Expected outputs are client-visible by design.** Test cases ship inside the
+  content bundle, which the browser already downloads. This is acceptable for a
+  teaching tool, but any future *sensitive* evaluation assets (reference
+  implementations, randomized data, anti-cheat keys) must live server-side and
+  never be shipped to the client. Do not add a `solutionCode` /
+  reference-implementation field to the content model.
 
 ## What is still NOT safe
 

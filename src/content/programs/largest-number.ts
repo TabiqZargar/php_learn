@@ -56,4 +56,56 @@ echo "Largest number: " . largest($a, $b, $c);`,
       { name: "c", label: "Third number", type: "number", value: "15", description: "The third integer to compare." },
     ],
   },
+  testCases: [
+    {
+      id: "largest-ascending",
+      name: "Ascending values",
+      inputs: [
+        { name: "a", label: "First number", type: "number", value: "1" },
+        { name: "b", label: "Second number", type: "number", value: "2" },
+        { name: "c", label: "Third number", type: "number", value: "3" },
+      ],
+      expectedOutput: "Largest number: 3",
+    },
+    {
+      id: "largest-middle",
+      name: "Middle value wins",
+      inputs: [
+        { name: "a", label: "First number", type: "number", value: "10" },
+        { name: "b", label: "Second number", type: "number", value: "25" },
+        { name: "c", label: "Third number", type: "number", value: "15" },
+      ],
+      expectedOutput: "Largest number: 25",
+    },
+    {
+      id: "largest-descending",
+      name: "Descending values",
+      inputs: [
+        { name: "a", label: "First number", type: "number", value: "45" },
+        { name: "b", label: "Second number", type: "number", value: "30" },
+        { name: "c", label: "Third number", type: "number", value: "12" },
+      ],
+      expectedOutput: "Largest number: 45",
+    },
+    {
+      id: "largest-negative",
+      name: "Negative values",
+      inputs: [
+        { name: "a", label: "First number", type: "number", value: "-1" },
+        { name: "b", label: "Second number", type: "number", value: "-5" },
+        { name: "c", label: "Third number", type: "number", value: "-2" },
+      ],
+      expectedOutput: "Largest number: -1",
+    },
+    {
+      id: "largest-tie",
+      name: "All equal",
+      inputs: [
+        { name: "a", label: "First number", type: "number", value: "7" },
+        { name: "b", label: "Second number", type: "number", value: "7" },
+        { name: "c", label: "Third number", type: "number", value: "7" },
+      ],
+      expectedOutput: "Largest number: 7",
+    },
+  ],
 };

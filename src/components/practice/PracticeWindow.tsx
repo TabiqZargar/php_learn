@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { getProgramBySlug } from "@/content";
 import type { Program } from "@/lib/learning/types";
 import type { PracticeConfig, PracticeResult } from "@/lib/practice/types";
+import type { EvaluationResult } from "@/lib/practice/evaluation";
+import { checkPracticeSolution } from "@/lib/practice/clientApi";
 import { practiceRunner } from "@/lib/practice/runner";
 import { CodeEditor } from "@/components/editor/CodeEditor";
 import { EditorToolbar } from "@/components/editor/EditorToolbar";
@@ -40,7 +42,9 @@ export function PracticeWindow({ programSlug }: PracticeWindowProps) {
     defaultInputValues(practice),
   );
   const [result, setResult] = useState<PracticeResult | null>(null);
+  const [evaluation, setEvaluation] = useState<EvaluationResult | null>(null);
   const [isRunning, setIsRunning] = useState(false);
+  const [isChecking, setIsChecking] = useState(false);
   const [copied, setCopied] = useState(false);
   const copyTimer = useRef<number | null>(null);
 
@@ -66,9 +70,10 @@ export function PracticeWindow({ programSlug }: PracticeWindowProps) {
   }));
 
   const handleRun = async () => {
-    if (isRunning) return;
-    setIsRunning(true);
+    if (isRunning || isChecking) return;
     setResult(null);
+    setEvaluation(null);
+    setIsRunning(true);
     try {
       const runResult = await practiceRunner.run(code, currentInputs);
       setResult(runResult);
@@ -77,10 +82,24 @@ export function PracticeWindow({ programSlug }: PracticeWindowProps) {
     }
   };
 
+  const handleCheck = async () => {
+    if (isRunning || isChecking) return;
+    setResult(null);
+    setEvaluation(null);
+    setIsChecking(true);
+    try {
+      const checked = await checkPracticeSolution(program.slug, code);
+      setEvaluation(checked);
+    } finally {
+      setIsChecking(false);
+    }
+  };
+
   const handleReset = () => {
     setCode(practice.starterCode);
     setInputValues(defaultInputValues(practice));
     setResult(null);
+    setEvaluation(null);
     setCopied(false);
   };
 
@@ -140,14 +159,16 @@ export function PracticeWindow({ programSlug }: PracticeWindowProps) {
           />
           <PracticeControls
             onRun={handleRun}
+            onCheck={handleCheck}
             onReset={handleReset}
             canReset={codeChanged || inputsChanged}
             running={isRunning}
+            checking={isChecking}
           />
         </div>
       </div>
 
-      <PracticeOutput result={result} />
+      <PracticeOutput result={result} evaluation={evaluation} />
     </div>
   );
 }

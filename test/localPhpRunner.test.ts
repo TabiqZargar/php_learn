@@ -5,8 +5,8 @@ import { tmpdir } from "node:os";
 import {
   MAX_INPUT_BYTES,
   MAX_SOURCE_BYTES,
-  runLocalPhp,
-} from "../src/lib/practice/localPhpRunner.ts";
+} from "../src/lib/practice/limits.ts";
+import { runLocalPhp } from "../src/lib/practice/localPhpRunner.ts";
 import type { PracticeInput } from "../src/lib/practice/types.ts";
 
 // Every execution test assumes development mode — the only mode that may

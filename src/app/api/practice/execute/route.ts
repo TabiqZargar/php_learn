@@ -1,10 +1,7 @@
 import { NextResponse } from "next/server";
 import type { PracticeInput, PracticeResult } from "@/lib/practice/types";
-import {
-  MAX_INPUT_BYTES,
-  MAX_SOURCE_BYTES,
-  runLocalPhp,
-} from "@/lib/practice/localPhpRunner";
+import { runLocalPhp } from "@/lib/practice/localPhpRunner";
+import { MAX_INPUT_BYTES, MAX_SOURCE_BYTES } from "@/lib/practice/limits";
 
 // PHP spawning requires the Node.js runtime — never Edge.
 export const runtime = "nodejs";

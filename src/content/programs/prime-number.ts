@@ -59,4 +59,36 @@ echo $n . " is " . (isPrime($n) ? "prime" : "not prime");`,
       { name: "n", label: "Number", type: "number", value: "7", description: "Check whether this integer is prime." },
     ],
   },
+  testCases: [
+    {
+      id: "prime-two",
+      name: "Two is prime",
+      inputs: [{ name: "n", label: "Number", type: "number", value: "2" }],
+      expectedOutput: "2 is prime",
+    },
+    {
+      id: "prime-seven",
+      name: "Seven is prime",
+      inputs: [{ name: "n", label: "Number", type: "number", value: "7" }],
+      expectedOutput: "7 is prime",
+    },
+    {
+      id: "prime-eight",
+      name: "Eight is not prime",
+      inputs: [{ name: "n", label: "Number", type: "number", value: "8" }],
+      expectedOutput: "8 is not prime",
+    },
+    {
+      id: "prime-one",
+      name: "One is not prime",
+      inputs: [{ name: "n", label: "Number", type: "number", value: "1" }],
+      expectedOutput: "1 is not prime",
+    },
+    {
+      id: "prime-seventeen",
+      name: "Seventeen is prime",
+      inputs: [{ name: "n", label: "Number", type: "number", value: "17" }],
+      expectedOutput: "17 is prime",
+    },
+  ],
 };
