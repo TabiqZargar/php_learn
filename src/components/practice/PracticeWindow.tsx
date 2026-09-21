@@ -7,7 +7,8 @@ import type { PracticeConfig, PracticeResult } from "@/lib/practice/types";
 import type { EvaluationResult } from "@/lib/practice/evaluation";
 import { checkPracticeSolution } from "@/lib/practice/clientApi";
 import { practiceRunner } from "@/lib/practice/runner";
-import { INITIAL_HINT_STATE, hintReducer } from "@/lib/practice/hintState";
+import { hintReducer, INITIAL_HINT_STATE } from "@/lib/practice/hintState";
+import { useProgress } from "@/components/progress/ProgressProvider";
 import { CodeEditor } from "@/components/editor/CodeEditor";
 import { EditorToolbar } from "@/components/editor/EditorToolbar";
 import { FeedbackPanel } from "./FeedbackPanel";
@@ -38,7 +39,9 @@ function defaultInputValues(config: PracticeConfig | undefined): Record<string, 
  * for every program.
  */
 export function PracticeWindow({ programSlug, onOpenLesson }: PracticeWindowProps) {
+  const { recordEvaluationResult, recordHintRevealed } = useProgress();
   const program: Program | undefined = getProgramBySlug(programSlug ?? null);
+
   const practice = program?.practice;
 
   const [code, setCode] = useState(practice?.starterCode ?? "");
@@ -95,6 +98,7 @@ export function PracticeWindow({ programSlug, onOpenLesson }: PracticeWindowProp
     try {
       const checked = await checkPracticeSolution(program.slug, code);
       setEvaluation(checked);
+      recordEvaluationResult(program.slug, checked);
     } finally {
       setIsChecking(false);
     }
@@ -122,6 +126,13 @@ export function PracticeWindow({ programSlug, onOpenLesson }: PracticeWindowProp
   const inputsChanged = practice.inputs.some(
     (input) => inputValues[input.name] !== input.value,
   );
+
+  const handleRevealHint = () => {
+    const totalHints = program.hints?.length ?? 0;
+    const revealedCount = Math.min(hintState.revealedCount + 1, totalHints);
+    dispatchHint({ type: "reveal", totalHints });
+    recordHintRevealed(program.slug, revealedCount);
+  };
 
   return (
     <div className="practice-window">
@@ -180,9 +191,7 @@ export function PracticeWindow({ programSlug, onOpenLesson }: PracticeWindowProp
         evaluation={evaluation}
         hints={program.hints ?? []}
         revealedCount={hintState.revealedCount}
-        onRevealHint={() =>
-          dispatchHint({ type: "reveal", totalHints: program.hints?.length ?? 0 })
-        }
+        onRevealHint={handleRevealHint}
         references={program.lessonReferences ?? []}
         onOpenLesson={onOpenLesson}
       />

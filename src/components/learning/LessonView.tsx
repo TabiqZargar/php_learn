@@ -1,6 +1,9 @@
+"use client";
+
 import type { Lesson } from "@/lib/learning/types";
 import { CodeBlock } from "./CodeBlock";
 import { PagerNav } from "./PagerNav";
+import { useProgress } from "@/components/progress/ProgressProvider";
 
 interface LessonViewProps {
   lesson: Lesson;
@@ -22,15 +25,33 @@ export function LessonView({
   onPrev,
   onNext,
 }: LessonViewProps) {
+  const { isLessonCompleted, toggleLessonCompleted } = useProgress();
+  const completed = isLessonCompleted(lesson.slug);
+
   return (
     <article>
       <header className="view-header">
-        <p className="view-kicker">
-          Lesson {index + 1} of {total} &middot; {lesson.category} &middot; ~
-          {lesson.estimatedMinutes} mins
-        </p>
-        <h1>{lesson.title}</h1>
-        <p className="lead">{lesson.description}</p>
+        <div className="view-header-text">
+          <p className="view-kicker">
+            Lesson {index + 1} of {total} &middot; {lesson.category} &middot; ~
+            {lesson.estimatedMinutes} mins
+          </p>
+          <h1>{lesson.title}</h1>
+          <p className="lead">{lesson.description}</p>
+        </div>
+        <button
+          type="button"
+          className={[
+            "lesson-complete-control",
+            completed ? "is-complete" : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+          aria-pressed={completed}
+          onClick={() => toggleLessonCompleted(lesson.slug)}
+        >
+          {completed ? "\u2713 Completed" : "Mark Complete"}
+        </button>
       </header>
 
       {lesson.sections.map((section) => (

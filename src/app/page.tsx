@@ -1,5 +1,10 @@
 import { Desktop } from "@/components/desktop/Desktop";
+import { ProgressProvider } from "@/components/progress/ProgressProvider";
 
 export default function Home() {
-  return <Desktop />;
+  return (
+    <ProgressProvider>
+      <Desktop />
+    </ProgressProvider>
+  );
 }

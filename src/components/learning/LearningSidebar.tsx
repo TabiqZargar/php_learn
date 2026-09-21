@@ -5,6 +5,7 @@ import type { Lesson, Program } from "@/lib/learning/types";
 import { SideNav, SideNavItem } from "@/components/navigation/SideNav";
 import { LessonList } from "./LessonList";
 import { ProgramList } from "./ProgramList";
+import { ProgressSummary } from "@/components/progress/ProgressSummary";
 
 interface LearningSidebarProps {
   lessons: Lesson[];
@@ -57,6 +58,7 @@ export function LearningSidebar({
         value={query}
         onChange={(event) => setQuery(event.target.value)}
       />
+      <ProgressSummary />
       <SideNavItem
         label="Learning Home"
         selected={activeView === "home"}
