@@ -75,4 +75,29 @@ echo "Converted: " . toLowercase($text);`,
       expectedOutput: "Converted: php academy!",
     },
   ],
+  hints: [
+    {
+      id: "lowercase-hint-1",
+      title: "Conceptual direction",
+      content:
+        "Lowercasing means \"no capital letters may survive\". Uppercase letters become their lowercase form, while digits, punctuation and spaces are left alone. It is a transformation, not a filter.",
+    },
+    {
+      id: "lowercase-hint-2",
+      title: "Implementation strategy",
+      content:
+        "PHP ships with a ready-made function that converts an entire string to lowercase in one call. Your helper must hand back the converted result so the caller can print it.",
+    },
+    {
+      id: "lowercase-hint-3",
+      title: "Algorithmic guidance",
+      content:
+        "Call strtolower() on the input and return its result. Do not echo inside the helper — the script already prints the value your function returns, so returning it is what matters.",
+    },
+  ],
+  lessonReferences: [
+    { lessonSlug: "data-types", label: "Data Types" },
+    { lessonSlug: "conditionals", label: "Conditional Statements" },
+    { lessonSlug: "functions", label: "Functions" },
+  ],
 };

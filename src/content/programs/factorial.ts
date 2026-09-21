@@ -86,4 +86,29 @@ echo "Factorial: " . factorial($n);`,
       expectedOutput: "Factorial: 3628800",
     },
   ],
+  hints: [
+    {
+      id: "factorial-hint-1",
+      title: "Conceptual direction",
+      content:
+        "A factorial is a product: n! multiplies every integer from 1 up to n (and 0! is defined as 1). There is no division or subtraction involved — it is pure repeated multiplication.",
+    },
+    {
+      id: "factorial-hint-2",
+      title: "Implementation strategy",
+      content:
+        "A running total works well: start with a value that is neutral for multiplication, then fold each input number into it one at a time. Count carefully so every number from 1 to n is included exactly once.",
+    },
+    {
+      id: "factorial-hint-3",
+      title: "Algorithmic guidance",
+      content:
+        "Set your result to 1 before the loop. Visit each number from 1 through n and multiply the running result by that number. The special case is built in: for both 0! and 1! the loop never changes the result, so the answer stays 1.",
+    },
+  ],
+  lessonReferences: [
+    { lessonSlug: "variables", label: "Variables" },
+    { lessonSlug: "loops", label: "Loops" },
+    { lessonSlug: "operators", label: "Operators" },
+  ],
 };

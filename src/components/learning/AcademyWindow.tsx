@@ -13,15 +13,23 @@ type ActiveView = "home" | "lesson" | "program";
 interface AcademyWindowProps {
   /** Opens the practice window for a program in the desktop manager. */
   onOpenPractice?: (program: Program) => void;
+  /**
+   * When present, the Academy opens directly on this lesson instead of the
+   * first lesson. The desktop manager keys this component by lesson request,
+   * so a related-lessons click remounts it with a fresh value.
+   */
+  initialLessonSlug?: string;
 }
 
 /**
  * The PHP Academy window: XP side-pane navigation over the lesson and
  * program content, with a white reading pane. State is local only.
  */
-export function AcademyWindow({ onOpenPractice }: AcademyWindowProps) {
+export function AcademyWindow({ onOpenPractice, initialLessonSlug }: AcademyWindowProps) {
   const [activeView, setActiveView] = useState<ActiveView>("lesson");
-  const [selectedSlug, setSelectedSlug] = useState<string>(FIRST_LESSON.slug);
+  const [selectedSlug, setSelectedSlug] = useState<string>(
+    initialLessonSlug ?? FIRST_LESSON.slug,
+  );
 
   const lesson = activeView === "lesson" ? getLessonBySlug(selectedSlug) : undefined;
   const program = activeView === "program" ? getProgramBySlug(selectedSlug) : undefined;

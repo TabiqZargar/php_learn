@@ -76,4 +76,28 @@ echo "Sorted: " . implode(" ", sortNumbers($numbers));`,
       expectedOutput: "Sorted: 4 7 13 21",
     },
   ],
+  hints: [
+    {
+      id: "sort-hint-1",
+      title: "Conceptual direction",
+      content:
+        "Sorting puts the values in ascending order: the smallest comes first and the largest last. Sorting never drops or duplicates values — the same set of numbers must come back out.",
+    },
+    {
+      id: "sort-hint-2",
+      title: "Implementation strategy",
+      content:
+        "PHP has built-in functions that reorder an array for you. The tricky part is that they work in place: they change the array you pass and do NOT hand back a brand-new sorted array.",
+    },
+    {
+      id: "sort-hint-3",
+      title: "Algorithmic guidance",
+      content:
+        "Call sort() on the array argument, then return that same array. The sort() return value is only true/false for success, so build your return on the array variable itself, not on the call's result.",
+    },
+  ],
+  lessonReferences: [
+    { lessonSlug: "data-types", label: "Data Types" },
+    { lessonSlug: "functions", label: "Functions" },
+  ],
 };

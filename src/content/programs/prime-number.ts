@@ -91,4 +91,29 @@ echo $n . " is " . (isPrime($n) ? "prime" : "not prime");`,
       expectedOutput: "17 is prime",
     },
   ],
+  hints: [
+    {
+      id: "prime-hint-1",
+      title: "Conceptual direction",
+      content:
+        "A prime has exactly two divisors: 1 and itself. To show a number is NOT prime you only need to find one other divisor — so this problem is really a search for a single counter-example.",
+    },
+    {
+      id: "prime-hint-2",
+      title: "Implementation strategy",
+      content:
+        "Test candidate divisors one by one and stop at the first hit. A division that leaves a remainder of 0 is your clue that a divisor was found; if you reach the end without finding any, the number is prime.",
+    },
+    {
+      id: "prime-hint-3",
+      title: "Algorithmic guidance",
+      content:
+        "Reject anything below 2 as not prime immediately. Then try each whole divisor starting at 2; the moment one divides n evenly, return false, and if no divisor is found, return true. You may stop testing after the divisor pairs with itself exceed n, because any larger divisor would pair with a smaller one you already checked.",
+    },
+  ],
+  lessonReferences: [
+    { lessonSlug: "conditionals", label: "Conditional Statements" },
+    { lessonSlug: "loops", label: "Loops" },
+    { lessonSlug: "operators", label: "Operators" },
+  ],
 };

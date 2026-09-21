@@ -108,4 +108,29 @@ echo "Largest number: " . largest($a, $b, $c);`,
       expectedOutput: "Largest number: 7",
     },
   ],
+  hints: [
+    {
+      id: "largest-hint-1",
+      title: "Conceptual direction",
+      content:
+        "There is no magic shortcut: you do not rearrange the numbers, you compare them. Ask yourself what property decides that one of three values is \"the largest\".",
+    },
+    {
+      id: "largest-hint-2",
+      title: "Implementation strategy",
+      content:
+        "Hold a running candidate and ask one yes/no question at a time: \"is the next number bigger than the one I currently believe is largest?\" Update the candidate only when the answer is yes.",
+    },
+    {
+      id: "largest-hint-3",
+      title: "Algorithmic guidance",
+      content:
+        "Seed your candidate with the first number, then check each of the other two in turn with a single if. When a checked value is greater, replace the candidate. After both checks the candidate is the largest; ties work because an equal value never replaces it.",
+    },
+  ],
+  lessonReferences: [
+    { lessonSlug: "variables", label: "Variables" },
+    { lessonSlug: "conditionals", label: "Conditional Statements" },
+    { lessonSlug: "operators", label: "Operators" },
+  ],
 };

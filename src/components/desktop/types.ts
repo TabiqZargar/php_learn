@@ -4,7 +4,13 @@ export interface PracticeWindowPayload {
   programSlug: string;
 }
 
-export type WindowPayload = PracticeWindowPayload;
+export interface AcademyWindowPayload {
+  lessonSlug: string;
+  /** Bumped on every related-lesson click so repeated clicks still remount. */
+  lessonRequest: number;
+}
+
+export type WindowPayload = PracticeWindowPayload | AcademyWindowPayload;
 
 export interface WindowState {
   id: WindowId;

@@ -1,26 +1,26 @@
 import type { Lesson, Program } from "@/lib/learning/types";
 
-import { LESSON_PHP_INTRODUCTION } from "./lessons/php-introduction";
-import { LESSON_SYNTAX } from "./lessons/syntax";
-import { LESSON_VARIABLES } from "./lessons/variables";
-import { LESSON_DATA_TYPES } from "./lessons/data-types";
-import { LESSON_OPERATORS } from "./lessons/operators";
-import { LESSON_CONDITIONALS } from "./lessons/conditionals";
-import { LESSON_LOOPS } from "./lessons/loops";
-import { LESSON_FUNCTIONS } from "./lessons/functions";
+import { LESSON_PHP_INTRODUCTION } from "./lessons/php-introduction.ts";
+import { LESSON_SYNTAX } from "./lessons/syntax.ts";
+import { LESSON_VARIABLES } from "./lessons/variables.ts";
+import { LESSON_DATA_TYPES } from "./lessons/data-types.ts";
+import { LESSON_OPERATORS } from "./lessons/operators.ts";
+import { LESSON_CONDITIONALS } from "./lessons/conditionals.ts";
+import { LESSON_LOOPS } from "./lessons/loops.ts";
+import { LESSON_FUNCTIONS } from "./lessons/functions.ts";
 
-import { PROGRAM_LARGEST_NUMBER } from "./programs/largest-number";
-import { PROGRAM_FACTORIAL } from "./programs/factorial";
-import { PROGRAM_PRIME_NUMBER } from "./programs/prime-number";
-import { PROGRAM_REVERSE_STRING } from "./programs/reverse-string";
-import { PROGRAM_LOWERCASE_STRING } from "./programs/lowercase-string";
-import { PROGRAM_ARRAY_SORTING } from "./programs/array-sorting";
-import { PROGRAM_SESSIONS } from "./programs/sessions";
-import { PROGRAM_SENTENCE_PARSER } from "./programs/sentence-parser";
-import { PROGRAM_COOKIES } from "./programs/cookies";
-import { PROGRAM_MYSQL_CONNECTION } from "./programs/mysql-connection";
-import { PROGRAM_FILE_OPERATIONS } from "./programs/file-operations";
-import { PROGRAM_MYSQL_LOGIN } from "./programs/mysql-login";
+import { PROGRAM_LARGEST_NUMBER } from "./programs/largest-number.ts";
+import { PROGRAM_FACTORIAL } from "./programs/factorial.ts";
+import { PROGRAM_PRIME_NUMBER } from "./programs/prime-number.ts";
+import { PROGRAM_REVERSE_STRING } from "./programs/reverse-string.ts";
+import { PROGRAM_LOWERCASE_STRING } from "./programs/lowercase-string.ts";
+import { PROGRAM_ARRAY_SORTING } from "./programs/array-sorting.ts";
+import { PROGRAM_SESSIONS } from "./programs/sessions.ts";
+import { PROGRAM_SENTENCE_PARSER } from "./programs/sentence-parser.ts";
+import { PROGRAM_COOKIES } from "./programs/cookies.ts";
+import { PROGRAM_MYSQL_CONNECTION } from "./programs/mysql-connection.ts";
+import { PROGRAM_FILE_OPERATIONS } from "./programs/file-operations.ts";
+import { PROGRAM_MYSQL_LOGIN } from "./programs/mysql-login.ts";
 
 /** All lessons ordered as the curriculum intends. */
 export const LESSONS: Lesson[] = [

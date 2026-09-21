@@ -75,4 +75,29 @@ echo "Reversed: " . reverseString($text);`,
       expectedOutput: "Original: \nReversed: ",
     },
   ],
+  hints: [
+    {
+      id: "reverse-hint-1",
+      title: "Conceptual direction",
+      content:
+        "Reversing keeps every character but flips the order: the last character becomes the first. The empty string reversed is still empty — there is nothing to undo there.",
+    },
+    {
+      id: "reverse-hint-2",
+      title: "Implementation strategy",
+      content:
+        "Two roads lead to the answer: take characters off the end of the original one at a time, or use a PHP built-in function designed for strings. Both produce the same result.",
+    },
+    {
+      id: "reverse-hint-3",
+      title: "Algorithmic guidance",
+      content:
+        "PHP provides strrev(), which returns the reversed version of a string — and this exercise expects exactly PHP's built-in helpers. If you prefer a loop, append each character from the last index down to zero to a new string.",
+    },
+  ],
+  lessonReferences: [
+    { lessonSlug: "data-types", label: "Data Types" },
+    { lessonSlug: "loops", label: "Loops" },
+    { lessonSlug: "variables", label: "Variables" },
+  ],
 };

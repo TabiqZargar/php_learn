@@ -51,6 +51,27 @@ export interface ProgramTestCase {
   expectedOutput: string;
 }
 
+/** One progressive hint in a program's practice sequence. */
+export interface ProgramHint {
+  /** Unique id within the program (used as a stable key). */
+  id: string;
+  /** Short thematic label, e.g. "Conceptual direction". */
+  title: string;
+  /**
+   * Hint body. Progressively more specific across the sequence, but NEVER
+   * a complete solution — no code snippets or copy-paste answers.
+   */
+  content: string;
+}
+
+/** A related lesson promoted after an evaluation, opening it in the Academy. */
+export interface LessonReference {
+  /** Must resolve to an existing lesson slug in the curriculum. */
+  lessonSlug: string;
+  /** Human-friendly link label shown in the related-lessons list. */
+  label: string;
+}
+
 export interface Program {
   id: string;
   slug: string;
@@ -71,6 +92,11 @@ export interface Program {
   practice?: PracticeConfig;
   /** Graded test cases for Check Solution (present = evaluation supported). */
   testCases?: ProgramTestCase[];
-  /** Optional guided hints, intended for a later phase. */
-  hints?: string[];
+  /**
+   * Progressive guided hints shown in the practice window. Present when
+   * hints are authored for the program; a program always has 0 or 3 hints.
+   */
+  hints?: ProgramHint[];
+  /** Related lessons promoted after an evaluation (composition over time). */
+  lessonReferences?: LessonReference[];
 }

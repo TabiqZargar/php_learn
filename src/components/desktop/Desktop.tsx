@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import type { CSSProperties } from "react";
-import type { WindowId, WindowState } from "./types";
+import type { AcademyWindowPayload, PracticeWindowPayload, WindowId, WindowState } from "./types";
 import { WINDOW_TITLES } from "./types";
 import { DesktopIcon } from "./DesktopIcon";
 import { Window } from "../windows/Window";
@@ -71,6 +71,7 @@ export function Desktop() {
   const [activeWindowId, setActiveWindowId] = useState<string | null>("academy");
   const [startMenuOpen, setStartMenuOpen] = useState(false);
   const [selectedIcon, setSelectedIcon] = useState<string | null>(null);
+  const lessonRequestRef = useRef(0);
 
   const openWindow = useCallback((id: WindowId) => {
     setStartMenuOpen(false);
@@ -114,6 +115,33 @@ export function Desktop() {
     setActiveWindowId("practice");
   }, []);
 
+  const openLesson = useCallback((lessonSlug: string) => {
+    setStartMenuOpen(false);
+    const lessonRequest = lessonRequestRef.current + 1;
+    lessonRequestRef.current = lessonRequest;
+    setWindows((current) => {
+      const existing = current.find((win) => win.id === "academy");
+      if (existing) {
+        return current.map((win) =>
+          win.id === "academy"
+            ? { ...win, minimized: false, payload: { lessonSlug, lessonRequest } }
+            : win,
+        );
+      }
+      return [
+        ...current,
+        {
+          id: "academy",
+          title: WINDOW_TITLES.academy,
+          minimized: false,
+          maximized: false,
+          payload: { lessonSlug, lessonRequest },
+        },
+      ];
+    });
+    setActiveWindowId("academy");
+  }, []);
+
   const closeWindow = useCallback((id: WindowId) => {
     setWindows((current) => current.filter((win) => win.id !== id));
     setActiveWindowId((current) => {
@@ -155,17 +183,28 @@ export function Desktop() {
 
   const renderContent = (win: WindowState) => {
     switch (win.id) {
-      case "academy":
-        return <AcademyWindow onOpenPractice={(program) => openPractice(program.slug)} />;
-      case "programs":
-        return <ProgramsWindow onOpenPractice={(program) => openPractice(program.slug)} />;
-      case "practice":
+      case "academy": {
+        const payload = win.payload as AcademyWindowPayload | undefined;
         return (
-          <PracticeWindow
-            key={win.payload?.programSlug ?? "none"}
-            programSlug={win.payload?.programSlug}
+          <AcademyWindow
+            key={payload ? `lesson-${payload.lessonRequest}` : "static"}
+            initialLessonSlug={payload?.lessonSlug}
+            onOpenPractice={(program) => openPractice(program.slug)}
           />
         );
+      }
+      case "programs":
+        return <ProgramsWindow onOpenPractice={(program) => openPractice(program.slug)} />;
+      case "practice": {
+        const payload = win.payload as PracticeWindowPayload | undefined;
+        return (
+          <PracticeWindow
+            key={payload?.programSlug ?? "none"}
+            programSlug={payload?.programSlug}
+            onOpenLesson={openLesson}
+          />
+        );
+      }
       case "reference":
         return (
           <PlaceholderContent
