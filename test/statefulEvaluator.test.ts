@@ -8,21 +8,33 @@ import {
 } from "../src/lib/practice/statefulEvaluator.ts";
 import type { StatefulTestCase } from "../src/lib/learning/types.ts";
 
-function step(inputs: Record<string, string>, expectedOutput: string) {
-  return { inputs, expectedOutput };
+function step(
+  inputs: Record<string, string>,
+  expectedOutput: string,
+  expectedCookies?: Record<string, string | null>,
+): StatefulTestCase["steps"][number] {
+  return { inputs, expectedOutput, ...(expectedCookies ? { expectedCookies } : {}) };
 }
 
 function makeCase(id: string, name: string, steps: ReturnType<typeof step>[]): StatefulTestCase {
   return { id, name, steps };
 }
 
-function makeDeps(behavior: (stepIndex: number, sessionId: string, inputs: Record<string, string>) => StatefulStepRunResult): {
+function makeDeps(
+  behavior: (
+    caseIndex: number,
+    stepIndex: number,
+    sessionId: string,
+    inputs: Record<string, string>,
+  ) => StatefulStepRunResult,
+): {
   deps: StatefulEvaluatorDeps;
   created: string[];
   destroyed: string[];
 } {
   const created: string[] = [];
   const destroyed: string[] = [];
+  const stepCounts = new Map<string, number>();
   let counter = 0;
   return {
     created,
@@ -37,8 +49,10 @@ function makeDeps(behavior: (stepIndex: number, sessionId: string, inputs: Recor
         destroyed.push(id);
       },
       runStep: async (sessionId, _code, inputs) => {
-        const index = created.indexOf(sessionId);
-        return behavior(index, sessionId, inputs);
+        const caseIndex = created.indexOf(sessionId);
+        const stepIndex = stepCounts.get(sessionId) ?? 0;
+        stepCounts.set(sessionId, stepIndex + 1);
+        return behavior(caseIndex, stepIndex, sessionId, inputs);
       },
     },
   };
@@ -85,8 +99,10 @@ describe("statefulEvaluator", () => {
       ]),
       makeCase("c2", "Never reached", [step({ action: "status" }, "ok")]),
     ];
-    const { deps } = makeDeps((index) => {
-      if (index === 0) return { status: "success", stdout: "Logged in: bob" };
+    const { deps, destroyed } = makeDeps((caseIndex, stepIndex) => {
+      if (caseIndex === 0 && stepIndex === 0) {
+        return { status: "success", stdout: "Logged in: bob" };
+      }
       return { status: "success", stdout: "Logged in: WRONG" };
     });
     const result = await evaluateStatefulSolution(FAKE_CODE, cases, deps);
@@ -95,16 +111,14 @@ describe("statefulEvaluator", () => {
     assert.equal(result.testResults.length, 1);
     assert.equal(result.testResults[0].status, "wrong_answer");
     assert.equal(result.testResults[0].message, "Step 2 of 2: Output does not match the expected result.");
+    // The failed case still had its session cleaned up.
+    assert.equal(destroyed.length, 1);
   });
 
   test("expectedCookies must hold after a step", async () => {
     const cases = [
       makeCase("c1", "Set", [
-        {
-          inputs: { action: "set" },
-          expectedOutput: "set",
-          expectedCookies: { color: "blue" },
-        },
+        step({ action: "set" }, "set", { color: "blue" }),
       ]),
     ];
     const missing = await evaluateStatefulSolution(
@@ -129,11 +143,7 @@ describe("statefulEvaluator", () => {
   test("a null expected cookie must be absent", async () => {
     const cases = [
       makeCase("c1", "Delete", [
-        {
-          inputs: { action: "delete" },
-          expectedOutput: "deleted",
-          expectedCookies: { color: null },
-        },
+        step({ action: "delete" }, "deleted", { color: null }),
       ]),
     ];
     const absent = await evaluateStatefulSolution(
@@ -151,23 +161,31 @@ describe("statefulEvaluator", () => {
     assert.equal(present.status, "wrong_answer");
   });
 
-  test("step failures map to evaluation statuses", async () => {
-    const statuses: StatefulStepRunResult["status"][] = [
+  test("step failures map to preserved evaluation statuses", async () => {
+    const preserved: StatefulStepRunResult["status"][] = [
       "syntax_error",
       "timeout",
       "output_limit",
       "runtime_unavailable",
       "execution_disabled",
       "runtime_error",
-      "session_expired",
-      "invalid_request",
     ];
-    for (const status of statuses) {
+    for (const status of preserved) {
       const cases = [makeCase("c1", "C", [step({}, "ok")])];
       const { deps } = makeDeps(() => ({ status, message: "boom" }));
       const result = await evaluateStatefulSolution(FAKE_CODE, cases, deps);
-      assert.equal(result.status, "runtime_error", `unexpected ${status}`);
+      assert.equal(result.status, status, `unexpected ${status}`);
       assert.equal(result.testResults[0].message, "boom");
+    }
+  });
+
+  test("statuses outside EvaluationStatus collapse to runtime_error", async () => {
+    for (const status of ["session_expired", "session_not_found", "invalid_request"] as const) {
+      const cases = [makeCase("c1", "C", [step({}, "ok")])];
+      const { deps } = makeDeps(() => ({ status, message: "broken" }));
+      const result = await evaluateStatefulSolution(FAKE_CODE, cases, deps);
+      assert.equal(result.status, "runtime_error");
+      assert.equal(result.testResults[0].message, "broken");
     }
   });
 

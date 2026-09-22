@@ -57,10 +57,6 @@ async function send(
   return { status: response.status, stdout: response.stdout, jar: nextJar };
 }
 
-function sessionWorkspace(session: StatefulPracticeSession): void {
-  void session.workspacePath;
-}
-
 describe("statefulPhpRunner", () => {
   test("execution is disabled outside development mode", async () => {
     const previous = appEnv.NODE_ENV;
@@ -214,7 +210,13 @@ describe("statefulPhpRunner", () => {
           {},
         );
         assert.equal(bobView.stdout, "none");
-        assert.equal(jarToRecord(getSessionJar(bob.id)).PHPSESSID, undefined);
+        // Both sessions get their own PHPSESSID cookie, but they must never
+        // share one: isolation is asserted on distinct opaque ids.
+        const aliceId = jarToRecord(getSessionJar(alice.id)).PHPSESSID;
+        const bobId = jarToRecord(getSessionJar(bob.id)).PHPSESSID;
+        assert.ok(aliceId, "alice must hold a session cookie");
+        assert.ok(bobId, "bob must hold a session cookie");
+        assert.notEqual(aliceId, bobId);
       } finally {
         await destroyStatefulSession(alice.id);
         await destroyStatefulSession(bob.id);
@@ -267,7 +269,6 @@ describe("statefulPhpRunner", () => {
         await destroyStatefulSession(session.id);
         await rm(fixture, { recursive: true, force: true });
       }
-      sessionWorkspace(session);
     });
 
     test("remote URL reads are disabled", async () => {

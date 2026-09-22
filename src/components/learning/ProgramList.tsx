@@ -29,7 +29,8 @@ export function ProgramList({ programs, selectedSlug, onSelect }: ProgramListPro
           progress?.lastStatus !== undefined &&
           (bestTotal > 0 || (progress.lastPassed ?? 0) > 0);
 
-        const hasTestCases = (program.testCases?.length ?? 0) > 0;
+        const hasTestCases = (program.testCases?.length ?? 0) > 0
+          || (program.statefulTestCases?.length ?? 0) > 0;
         let meta: string | string[] | undefined;
         let ariaLabel: string | undefined;
 

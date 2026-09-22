@@ -140,6 +140,24 @@ function killProcess(child: ReturnType<typeof spawn>): void {
   }
 }
 
+/**
+ * Kill the php -S server and wait for its process to fully detach before the
+ * request returns. On Windows the workspace files stay locked until the OS
+ * releases the process handle; awaiting close prevents session cleanup races.
+ */
+async function stopServer(child: ReturnType<typeof spawn>): Promise<void> {
+  killProcess(child);
+  if (process.platform !== "win32") return;
+  await new Promise<void>((resolve) => {
+    const timer = setTimeout(resolve, 750);
+    timer.unref?.();
+    child.once("close", () => {
+      clearTimeout(timer);
+      resolve();
+    });
+  });
+}
+
 function phpServerArgs(session: StatefulPracticeSession, port: number): string[] {
   return [
     "-n",
@@ -324,7 +342,7 @@ export async function runStatefulRequest(
       return { status: "success", stdout: safeBody, stderr: "", executionTimeMs, setCookieHeaders };
     }
     if (response.status === 500) {
-      const status: PracticeResultStatus = /parse error/i.test(safeBody)
+      const status: PracticeResultStatus = /parse error|syntax error/i.test(safeBody)
         ? "syntax_error"
         : "runtime_error";
       return {
@@ -349,6 +367,6 @@ export async function runStatefulRequest(
     };
   } finally {
     if (timer) clearTimeout(timer);
-    if (child) killProcess(child);
+    if (child) await stopServer(child);
   }
 }

@@ -28,7 +28,15 @@ import type {
   StatefulSessionMetadata,
 } from "./types.ts";
 
-/** Written WITHOUT a BOM — any leading byte breaks header-emitting PHP. */
+/**
+ * Written WITHOUT a BOM — any leading byte breaks header-emitting PHP.
+ *
+ * The router deliberately does NOT call session_start(): learning programs
+ * must call it themselves, exactly like on a real web host. It only pins the
+ * session storage directory (defense in depth — the -d flag is not reliable
+ * for session.save_path) and turns every uncaught Throwable into HTTP 500 so
+ * the web runner can distinguish success, syntax and runtime failures.
+ */
 const ROUTER_SOURCE = `<?php
 $token = trim((string) @file_get_contents(__DIR__ . "/__token.txt"));
 if (($_SERVER["REQUEST_METHOD"] ?? "GET") !== "POST"
@@ -36,10 +44,18 @@ if (($_SERVER["REQUEST_METHOD"] ?? "GET") !== "POST"
     http_response_code(403);
     exit;
 }
-session_name("PHPSESSID");
-session_start();
-require __DIR__ . "/program.php";
-session_write_close();
+ini_set("session.save_path", __DIR__ . "/sess");
+ob_start();
+try {
+    require __DIR__ . "/program.php";
+} catch (Throwable $error) {
+    http_response_code(500);
+    ob_end_clean();
+    echo get_class($error) . ": " . $error->getMessage()
+        . " in program.php:" . $error->getLine();
+    exit;
+}
+ob_end_flush();
 `;
 
 interface SessionRecord {
@@ -129,11 +145,27 @@ export async function destroyStatefulSession(id: string): Promise<boolean> {
   const record = registry.get(id);
   if (!record) return false;
   registry.delete(id);
-  try {
-    await rm(record.session.workspacePath, { recursive: true, force: true });
-  } catch {
-    // Best-effort cleanup; the OS temp dir reclaims leftovers.
+
+  // Windows can hold workspace files open briefly after php -S is killed, so
+  // a single rm() can hit EBUSY halfway through and leak a partial directory.
+  // Retry the whole removal a few times so cleanup converges in practice.
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      await rm(record.session.workspacePath, {
+        recursive: true,
+        force: true,
+        maxRetries: 8,
+        retryDelay: 150,
+      });
+      return true;
+    } catch (error) {
+      lastError = error;
+      if (attempt < 2) await new Promise((resolve) => setTimeout(resolve, 250));
+    }
   }
+  // Best-effort cleanup; the OS temp dir reclaims leftovers.
+  void lastError;
   return true;
 }
 

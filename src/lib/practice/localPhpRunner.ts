@@ -155,7 +155,14 @@ export async function runLocalPhp(
   } finally {
     if (tmpDir) {
       try {
-        await rm(tmpDir, { recursive: true, force: true });
+        await rm(tmpDir, {
+          recursive: true,
+          force: true,
+          // Windows may release file handles a moment after close; retry so
+          // cleanup converges instead of leaving stray temp directories.
+          maxRetries: 10,
+          retryDelay: 100,
+        });
       } catch {
         // Best-effort cleanup; the OS temp directory will reclaim leftovers.
       }

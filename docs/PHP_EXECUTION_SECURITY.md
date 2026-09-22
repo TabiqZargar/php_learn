@@ -10,14 +10,20 @@ mistakes this feature for a production sandbox.
 Browser (Practice UI)
    │  POST /api/practice/execute  { code, inputs }
    │  POST /api/practice/check    { programSlug, code }
+   │  POST /api/practice/stateful/session   (create/destroy practice session)
+   │  POST /api/practice/stateful/execute   (one stateful request)
    ▼
 Next.js API routes  src/app/api/practice/{execute,check}/route.ts
+                    + src/app/api/practice/stateful/{session,execute}/route.ts
    │  validates payloads (shape + size limits), resolves the program
    ▼
-src/lib/practice/localPhpRunner.ts
+Run path:   src/lib/practice/localPhpRunner.ts     → local PHP CLI
+Check path: src/lib/practice/{evaluator,statefulEvaluator}.ts
+Stateful:   src/lib/practice/stateful/{runner,sessionManager,cookieJar}.ts
    │  server-only, child_process.spawn()
    ▼
-local PHP CLI  (php -n … program.php arg1 …)
+pure    → php -n … program.php arg1 …
+stateful → fresh php -n -S 127.0.0.1:PORT (per request) behind a gated router
 ```
 
 All limits live in one place — `src/lib/practice/limits.ts` — so a reviewer sees
@@ -33,6 +39,11 @@ Key properties of the local runner:
   `child_process.spawn()` as a raw argument array — never through
   `exec`, `execSync`, `shell_exec`, `system`, `popen`, or a shell string — so
   command-string injection is not possible.
+- **Process execution is disabled inside PHP.** Both runners launch with
+  `-d disable_functions=<DISABLED_PHP_FUNCTIONS>` (`proc_open`, `popen`,
+  `exec`, `system`, `shell_exec`, `passthru`, `pcntl_exec`). Calling any of
+  them raises "Call to undefined function" and the run is reported as a
+  runtime error — no child processes can be started by student code.
 - **Throwaway directory.** Code is written to a fresh `os.tmpdir()` directory
   (`php-academy-*`) that is deleted after every run. Nothing is ever written to
   project files, and the working directory is that throwaway directory.
@@ -52,9 +63,10 @@ Key properties of the local runner:
 ## Check Solution evaluation
 
 `POST /api/practice/check` grades a student's code against each program's
-`testCases` (defined in `src/content/programs/*`). Only the six locally
-executable programs carry test cases; every other program is rejected with a
-typed 400. Notable properties:
+`testCases` (pure programs) or `statefulTestCases` (stateful programs),
+defined in `src/content/programs/*`. Only programs that declare test cases are
+gradable; every other program is rejected with a typed 400. Notable
+properties:
 
 - **Execution goes through the same sandbox.** The evaluator
   (`src/lib/practice/evaluator.ts`) never spawns PHP itself — the route injects
@@ -66,6 +78,50 @@ typed 400. Notable properties:
   implementations, randomized data, anti-cheat keys) must live server-side and
   never be shipped to the client. Do not add a `solutionCode` /
   reference-implementation field to the content model.
+
+## Stateful web runner (sessions & cookies)
+
+Stateful programs run through a per-request `php -S` server instead of the
+CLI so HTTP semantics (sessions, cookies, header flushing) are real. It
+inherits every limit above and adds:
+
+- **One fresh server per request**, bound to `127.0.0.1` on an ephemeral
+  port, killed (and awaited to detach, on Windows) before the request
+  returns. No long-lived listener exists.
+- **Gated router.** The server only answers `POST` requests carrying a random
+  per-session bearer token (`__token.txt`) that the runner reads straight from
+  the workspace. Anything else gets `403`.
+- **Strict filesystem boundary.** `open_basedir` and the working directory are
+  the session workspace. PHP session files live in
+  `<workspace>/sess` (set via `-d session.save_path` *and* `ini_set` inside the
+  router, because `-d` alone is not reliable for that key).
+- **Server-side cookie jar.** `Set-Cookie` headers are parsed into an in-memory
+  jar keyed by name+path; the next request's `Cookie` header is rebuilt from it.
+  The jar is the model of a browser's jar — it is never shipped to the client;
+  only a count of changed cookies is surfaced to the learner UI. The browser's
+  real cookies are never used or sent.
+- **Throwables become HTTP 500.** The router catches every uncaught PHP error,
+  returns `500` with a one-line diagnostic (learners see the message, not a
+  stack trace), so the runner can classify success / syntax / runtime failures.
+  The `Parse error|syntax error` classifier maps `500`s accordingly.
+- **Expiry & cleanup.** Sessions expire 30 minutes after creation; expired
+  sessions are rejected (`session_expired`) and destroyed, deleting their
+  workspace. Workspace deletion retries on Windows to keep temp dirs from
+  leaking. The registry is in-memory and single-process (documented in
+  `docs/STATEFUL_PHP_EXECUTION.md`); a server restart clears all sessions.
+
+## Capability split (9A vs 9B/9C)
+
+`PracticeConfig.execution: "pure" | "stateful"` is explicit per program.
+Pure programs use `php` CLI; stateful programs use the `php -S` web runner.
+
+- **Available now:** CLI computation (`pure`) and HTTP request lifecycle with
+  `$_SESSION` + `setcookie`/`$_COOKIE` (`stateful`).
+- **Deliberately NOT available:** the filesystem / file uploads and the MySQL
+  database. Exercises that would need them (Phase 9B filesystem, 9C MySQL)
+  are staged but disabled; never present a filesystem or database practice
+  program as if it worked. Any future filesystem/database exercise requires
+  its own isolated runtime and must not reuse this sandbox.
 
 ## What is still NOT safe
 
@@ -80,6 +136,13 @@ development user. That means the code can, among other things:
   **outside** the allow-list behaviour, but DNS, sockets via `stream_socket_*`
   and similar APIs may still be reachable);
 - consume the machine's CPU/memory up to the configured caps.
+
+The stateful `php -S` runner has the same exposure: `open_basedir` is scoped to
+the session workspace (not a security boundary), network APIs beyond the
+`allow_url_*` stream wrappers may still be reachable, and state persists
+across requests *within a single practice session* by design — so a learner
+could store small amounts of data on the dev machine's session files until the
+session expires. That is the point of the exercise; it is still dev-only.
 
 This is a **teaching convenience for local development only**. It is not a
 production sandbox and must never run against the published site.

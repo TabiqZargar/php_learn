@@ -15,7 +15,7 @@ const NOW = Date.UTC(2026, 8, 21, 12, 0, 0); // fixed reference
 describe("cookieJar", () => {
   test("parseSetCookieHeader parses name, value and attributes", () => {
     const parsed = parseSetCookieHeader(
-      "color=blue; expires=Mon, 22 Sep 2026 12:00:00 GMT; Max-Age=3600; path=/",
+      "color=blue; expires=Mon, 22 Sep 2026 12:00:00 GMT; path=/",
       NOW,
     );
     assert.ok(parsed);
@@ -29,6 +29,13 @@ describe("cookieJar", () => {
     const parsed = parseSetCookieHeader("x=1; Max-Age=60; path=/", NOW);
     assert.ok(parsed);
     assert.equal(parsed.expiresAt, NOW + 60_000);
+
+    const both = parseSetCookieHeader(
+      "y=2; expires=Mon, 22 Sep 2026 12:00:00 GMT; Max-Age=60; path=/",
+      NOW,
+    );
+    assert.ok(both);
+    assert.equal(both.expiresAt, NOW + 60_000);
   });
 
   test("quoted values are unquoted", () => {

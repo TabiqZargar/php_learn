@@ -1,7 +1,6 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 import { LESSONS, PROGRAMS, getLessonBySlug } from "../src/content/index.ts";
-import type { Program } from "../src/lib/learning/types.ts";
 
 const STATEFUL_PROGRAMS = PROGRAMS.filter(
   (p) => p.practice?.execution === "stateful",
@@ -50,16 +49,14 @@ describe("stateful program content", () => {
         ids.add(c.id);
         assert.ok(c.name.trim().length > 0);
         assert.ok(c.steps.length >= 1, `${p.slug}/${c.id} needs steps`);
-        const stepIds = new Set<string>();
         for (const s of c.steps) {
-          assert.ok(typeof s.inputs === "object" && s.inputs !== null);
+          assert.ok(
+            typeof s.inputs === "object" && s.inputs !== null && !Array.isArray(s.inputs),
+            "step inputs must be a plain string record",
+          );
           assert.ok(s.expectedOutput.trim().length > 0);
-          const serialized = JSON.stringify(c.steps);
-          assert.ok(serialized.length > 0);
-          for (const key of Object.keys(s.inputs)) {
-            assert.ok(key.trim().length > 0);
-            assert.ok(!stepIds.has(key), "inputs must be a plain record");
-            stepIds.add(key);
+          for (const v of Object.values(s.inputs)) {
+            assert.equal(typeof v, "string");
           }
         }
       }

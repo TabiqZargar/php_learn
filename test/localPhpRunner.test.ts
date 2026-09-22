@@ -144,10 +144,18 @@ describe("localPhpRunner", () => {
 
     test("temp files are cleaned up after a run", async () => {
       await runLocalPhp("<?php echo 'clean';", []);
-      const leftovers = (await readdir(tmpdir())).filter((name) =>
-        name.startsWith("php-academy-"),
+      // The stateful suite shares the php-academy- prefix and runs in its own
+      // process; it has a dedicated leftover check, so count only pure dirs.
+      const leftovers = (await readdir(tmpdir())).filter(
+        (name) =>
+          name.startsWith("php-academy-") &&
+          !name.startsWith("php-academy-stateful-"),
       );
-      assert.equal(leftovers.length, 0);
+      assert.equal(
+        leftovers.length,
+        0,
+        `leftover temp dirs: ${leftovers.join(", ")}`,
+      );
     });
 
     test("process execution functions are disabled by sandbox config", async () => {

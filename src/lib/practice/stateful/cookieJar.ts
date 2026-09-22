@@ -48,9 +48,12 @@ export function parseSetCookieHeader(
   if (equals <= 0) return null;
 
   const name = first.slice(0, equals).trim();
-  const value = first.slice(equals + 1).trim();
+  const rawValue = first.slice(equals + 1).trim();
+  const quotedValue = ATTRIBUTE_VALUE_RE.exec(rawValue);
+  const value = quotedValue ? quotedValue[1] : rawValue;
   let path = "/";
   let expiresAt: number | undefined;
+  let maxAgeMs: number | undefined;
 
   for (const raw of parts.slice(1)) {
     const attr = raw.trim();
@@ -67,9 +70,12 @@ export function parseSetCookieHeader(
       if (!Number.isNaN(ts)) expiresAt = ts;
     } else if (attributeName === "max-age" && attributeValue) {
       const seconds = Number(attributeValue);
-      if (Number.isFinite(seconds)) expiresAt = nowMs + seconds * 1000;
+      if (Number.isFinite(seconds)) maxAgeMs = nowMs + seconds * 1000;
     }
   }
+
+  // RFC 6265: when both are present Max-Age wins over the wall-clock Expires.
+  if (maxAgeMs !== undefined) expiresAt = maxAgeMs;
 
   return { name, value, path, expiresAt };
 }
