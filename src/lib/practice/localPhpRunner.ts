@@ -28,6 +28,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { PracticeInput, PracticeResult } from "./types";
 import {
+  DISABLED_PHP_FUNCTIONS,
   EXECUTION_TIMEOUT_MS,
   MAX_INPUT_BYTES,
   MAX_OUTPUT_BYTES,
@@ -91,6 +92,14 @@ function sandboxEnv(): NodeJS.ProcessEnv {
   // Next's types augment ProcessEnv with a required readonly NODE_ENV; the
   // child process receives our allow-listed env without that augmentation.
   return env as unknown as NodeJS.ProcessEnv;
+}
+
+/** Shared by the pure runner and the stateful web runner (exported). */
+export { sandboxEnv };
+
+/** True when the PHP binary answers a minimal -n probe. */
+export async function isPhpAvailable(): Promise<boolean> {
+  return detectPhp();
 }
 
 /**
@@ -177,6 +186,8 @@ function runScript(
     "allow_url_include=0",
     "-d",
     `open_basedir=${workingDir}`,
+    "-d",
+    `disable_functions=${DISABLED_PHP_FUNCTIONS}`,
     scriptPath,
     ...argumentValues,
   ];

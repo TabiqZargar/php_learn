@@ -6,6 +6,7 @@ import { SideNav, SideNavItem } from "@/components/navigation/SideNav";
 import { LessonList } from "./LessonList";
 import { ProgramList } from "./ProgramList";
 import { ProgressSummary } from "@/components/progress/ProgressSummary";
+import { ContinueLearning, type ContinueTarget } from "@/components/progress/ContinueLearning";
 
 interface LearningSidebarProps {
   lessons: Lesson[];
@@ -15,6 +16,8 @@ interface LearningSidebarProps {
   onHome: () => void;
   onSelectLesson: (slug: string) => void;
   onSelectProgram: (slug: string) => void;
+  /** Opens the resume target (lesson in the Academy, program practice...). */
+  onContinueLearning: (target: ContinueTarget) => void;
 }
 
 export function LearningSidebar({
@@ -25,6 +28,7 @@ export function LearningSidebar({
   onHome,
   onSelectLesson,
   onSelectProgram,
+  onContinueLearning,
 }: LearningSidebarProps) {
   const [query, setQuery] = useState("");
 
@@ -58,6 +62,7 @@ export function LearningSidebar({
         value={query}
         onChange={(event) => setQuery(event.target.value)}
       />
+      <ContinueLearning onContinue={onContinueLearning} />
       <ProgressSummary />
       <SideNavItem
         label="Learning Home"

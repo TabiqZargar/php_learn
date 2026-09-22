@@ -1,7 +1,8 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
-import { readdir } from "node:fs/promises";
+import { mkdtemp, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
+import { join } from "node:path";
 import {
   MAX_INPUT_BYTES,
   MAX_SOURCE_BYTES,
@@ -147,6 +148,39 @@ describe("localPhpRunner", () => {
         name.startsWith("php-academy-"),
       );
       assert.equal(leftovers.length, 0);
+    });
+
+    test("process execution functions are disabled by sandbox config", async () => {
+      const result = await runLocalPhp('<?php echo @shell_exec("echo HACKED");', []);
+      assert.equal(result.status, "runtime_error");
+      const combined = (result.stdout ?? "") + (result.stderr ?? "");
+      assert.ok(!combined.includes("HACKED"));
+    });
+
+    test("open_basedir blocks reads outside the throwaway directory", async () => {
+      const fixture = await mkdtemp(join(tmpdir(), "php-academy-sec-"));
+      const secretPath = join(fixture, "secret.txt");
+      await writeFile(secretPath, "TOP-SECRET-CONTENT", "utf8");
+      const secretForward = secretPath.replaceAll("\\", "/");
+      try {
+        const result = await runLocalPhp(
+          `<?php $data = @file_get_contents("${secretForward}"); echo $data === false ? "blocked" : $data;`,
+          [],
+        );
+        assert.equal(result.status, "success");
+        assert.ok(!(result.stdout ?? "").includes("TOP-SECRET-CONTENT"));
+      } finally {
+        await rm(fixture, { recursive: true, force: true });
+      }
+    });
+
+    test("remote URL reads are disabled by sandbox config", async () => {
+      const result = await runLocalPhp(
+        '<?php $data = @file_get_contents("http://127.0.0.1:1/x"); echo $data === false ? "no-network" : "network";',
+        [],
+      );
+      assert.equal(result.status, "success");
+      assert.ok((result.stdout ?? "").includes("no-network"));
     });
   } else {
     test("runtime is reported unavailable when the PHP CLI is missing", async () => {

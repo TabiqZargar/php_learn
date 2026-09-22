@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { PROGRAMS, getProgramBySlug } from "@/content";
 import type { Program } from "@/lib/learning/types";
+import { previousIndex, nextIndex } from "@/lib/learning/navigation";
 import { SideNav } from "@/components/navigation/SideNav";
 import { ProgramList } from "./ProgramList";
 import { ProgramView } from "./ProgramView";
@@ -21,12 +22,14 @@ export function ProgramsWindow({ onOpenPractice }: ProgramsWindowProps) {
   const program = getProgramBySlug(selectedSlug);
 
   const programIndex = program ? PROGRAMS.findIndex((p) => p.id === program.id) : -1;
+  const prevProgramIndex =
+    programIndex >= 0 ? previousIndex(programIndex, PROGRAMS.length) : undefined;
+  const nextProgramIndex =
+    programIndex >= 0 ? nextIndex(programIndex, PROGRAMS.length) : undefined;
   const prevProgram: Program | undefined =
-    programIndex > 0 ? PROGRAMS[programIndex - 1] : undefined;
+    prevProgramIndex !== undefined ? PROGRAMS[prevProgramIndex] : undefined;
   const nextProgram: Program | undefined =
-    programIndex >= 0 && programIndex < PROGRAMS.length - 1
-      ? PROGRAMS[programIndex + 1]
-      : undefined;
+    nextProgramIndex !== undefined ? PROGRAMS[nextProgramIndex] : undefined;
 
   return (
     <div className="academy-layout">

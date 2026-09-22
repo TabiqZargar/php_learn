@@ -63,3 +63,78 @@ describe("hintState: reset", () => {
     assert.equal(state.revealedCount, 0);
   });
 });
+
+describe("hintState: hydrate", () => {
+  test("a persisted zero restores to zero (no-op)", () => {
+    const state = hintReducer(INITIAL_HINT_STATE, {
+      type: "hydrate",
+      revealedCount: 0,
+      totalHints: 3,
+    });
+    assert.equal(state, INITIAL_HINT_STATE);
+    assert.equal(state.revealedCount, 0);
+  });
+
+  test("restores a persisted reveal level exactly", () => {
+    const state = hintReducer(INITIAL_HINT_STATE, {
+      type: "hydrate",
+      revealedCount: 2,
+      totalHints: 3,
+    });
+    assert.equal(state.revealedCount, 2);
+  });
+
+  test("restores the maximum level when all hints were revealed", () => {
+    const state = hintReducer(INITIAL_HINT_STATE, {
+      type: "hydrate",
+      revealedCount: 3,
+      totalHints: 3,
+    });
+    assert.equal(state.revealedCount, 3);
+  });
+
+  test("clamps a persisted level above the hint count", () => {
+    const state = hintReducer(INITIAL_HINT_STATE, {
+      type: "hydrate",
+      revealedCount: 99,
+      totalHints: 3,
+    });
+    assert.equal(state.revealedCount, 3);
+  });
+
+  test("never reveals hints for a program with none available", () => {
+    const state = hintReducer(INITIAL_HINT_STATE, {
+      type: "hydrate",
+      revealedCount: 2,
+      totalHints: 0,
+    });
+    assert.equal(state, INITIAL_HINT_STATE);
+    assert.equal(state.revealedCount, 0);
+  });
+
+  test("hydrate raises a lower local level but never drops a higher one", () => {
+    const revealedOnce = hintReducer(INITIAL_HINT_STATE, { type: "reveal", totalHints: 3 });
+    const raised = hintReducer(revealedOnce, {
+      type: "hydrate",
+      revealedCount: 3,
+      totalHints: 3,
+    });
+    assert.equal(raised.revealedCount, 3);
+
+    const lowered = hintReducer(revealedOnce, {
+      type: "hydrate",
+      revealedCount: 1,
+      totalHints: 3,
+    });
+    assert.equal(lowered.revealedCount, 1);
+  });
+
+  test("hydrate never triggers an extra reveal beyond the persisted level", () => {
+    const state = hintReducer(INITIAL_HINT_STATE, {
+      type: "hydrate",
+      revealedCount: 2,
+      totalHints: 3,
+    });
+    assert.equal(state.revealedCount, 2);
+  });
+});

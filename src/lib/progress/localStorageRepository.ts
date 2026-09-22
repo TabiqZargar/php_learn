@@ -75,6 +75,26 @@ function normalizeProgramProgress(value: unknown): ProgramProgress {
   };
 }
 
+interface ResumeEntry {
+  type: "lesson" | "program";
+  slug: string;
+  updatedAt: string;
+}
+
+/**
+ * Structural sanitization only: type must be lesson/program, slug a non-empty
+ * string, updatedAt a parseable timestamp. Resolving the slug against the
+ * curriculum happens at the provider layer, which knows the registry.
+ */
+function normalizeResume(value: unknown): ResumeEntry | undefined {
+  if (!isRecord(value)) return undefined;
+  if (value.type !== "lesson" && value.type !== "program") return undefined;
+  if (!isString(value.slug) || value.slug.length === 0) return undefined;
+  if (!isString(value.updatedAt)) return undefined;
+  if (Number.isNaN(Date.parse(value.updatedAt))) return undefined;
+  return { type: value.type, slug: value.slug, updatedAt: value.updatedAt };
+}
+
 /**
  * Validate + clean a parsed payload into a supported ProgressState.
  * Returns null when the payload is unusable (malformed, wrong version), so
@@ -94,7 +114,14 @@ export function normalizeProgressState(value: unknown): ProgressState | null {
     programs[slug] = normalizeProgramProgress(entry);
   }
 
-  return { version: PROGRESS_VERSION, lessons, programs };
+  const resume = normalizeResume(value.resume);
+
+  return {
+    version: PROGRESS_VERSION,
+    lessons,
+    programs,
+    ...(resume ? { resume } : {}),
+  };
 }
 
 export function localStorageProgressRepository(

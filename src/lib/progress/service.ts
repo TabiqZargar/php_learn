@@ -7,7 +7,7 @@
  * Timestamps are ISO strings generated at the point of the update.
  */
 import type { EvaluationResult } from "@/lib/practice/evaluation";
-import type { LessonProgress, ProgramProgress, ProgressState } from "./types";
+import type { LessonProgress, ProgramProgress, ProgressState, ResumeInfo } from "./types";
 import { createEmptyProgressState } from "./repository.ts";
 
 function nowIso(): string {
@@ -161,6 +161,42 @@ export function getSummary(state: ProgressState): ProgressSummary {
     if (entry.completed) programsCompleted += 1;
   }
   return { lessonsCompleted, programsCompleted };
+}
+
+export function getResume(state: ProgressState): ResumeInfo | undefined {
+  return state.resume;
+}
+
+/**
+ * Record the last opened learning location. The latest meaningful navigation
+ * always replaces the previous one; it never touches completion records.
+ * `now` is injectable only so callers keep the timestamp side effect out of
+ * the pure rule (the provider passes nothing).
+ */
+export function setResume(
+  state: ProgressState,
+  type: ResumeInfo["type"],
+  slug: string,
+  now?: string,
+): ProgressState {
+  return {
+    ...state,
+    resume: { type, slug, updatedAt: now ?? nowIso() },
+  };
+}
+
+/**
+ * A resume is only rendered when its slug actually exists in the content
+ * registry (unknown slugs are never persisted as a target).
+ */
+export function isResumeTargetKnown(
+  resume: ResumeInfo,
+  lessonSlugs: readonly string[],
+  programSlugs: readonly string[],
+): boolean {
+  return resume.type === "lesson"
+    ? lessonSlugs.includes(resume.slug)
+    : programSlugs.includes(resume.slug);
 }
 
 /** Discard all persisted progress (used behind an explicit user action). */

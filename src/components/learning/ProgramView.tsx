@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useRef } from "react";
 import type { Program } from "@/lib/learning/types";
 import { CodeBlock } from "./CodeBlock";
 import { SectionHeading } from "./SectionHeading";
@@ -27,6 +30,18 @@ export function ProgramView({
   onNext,
   onOpenPractice,
 }: ProgramViewProps) {
+  // Focus moves to the program heading when navigation switches programs
+  // (skipped on the first render so page load stays unassertive).
+  const headingRef = useRef<HTMLHeadingElement | null>(null);
+  const mounted = useRef(false);
+  useEffect(() => {
+    if (!mounted.current) {
+      mounted.current = true;
+      return;
+    }
+    headingRef.current?.focus();
+  }, [program.slug]);
+
   return (
     <article>
       <header className="view-header">
@@ -34,7 +49,9 @@ export function ProgramView({
           Program {index + 1} of {total} &middot; {program.category} &middot;{" "}
           {program.difficulty}
         </p>
-        <h1>{program.title}</h1>
+        <h1 ref={headingRef} tabIndex={-1}>
+          {program.title}
+        </h1>
         <p className="lead">{program.description}</p>
       </header>
 

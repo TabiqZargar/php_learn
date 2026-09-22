@@ -9,6 +9,13 @@ interface PracticeControlsProps {
   running?: boolean;
   /** Disables all actions while a check request is in flight. */
   checking?: boolean;
+  /**
+   * Label for the reset button. Stateful programs use "Reset Editor" so it
+   * stays visually distinct from the session's Reset Session action.
+   */
+  resetLabel?: string;
+  /** Disables Run/Check (e.g. stateful programs with no active session). */
+  sessionReady?: boolean;
 }
 
 /**
@@ -23,8 +30,11 @@ export function PracticeControls({
   canReset,
   running = false,
   checking = false,
+  resetLabel = "Reset",
+  sessionReady = true,
 }: PracticeControlsProps) {
   const busy = running || checking;
+  const actionsReady = busy || !sessionReady;
 
   return (
     <div className="practice-controls">
@@ -33,11 +43,11 @@ export function PracticeControls({
         disabled={!canReset || busy}
         aria-label="Reset to starter code and default input"
       >
-        Reset
+        {resetLabel}
       </XpButton>
       <XpButton
         onClick={onCheck}
-        disabled={busy}
+        disabled={actionsReady}
         aria-label="Check the current code against the program's test cases"
       >
         {checking ? "Checking…" : <>&#10003; Check Solution</>}
@@ -45,7 +55,7 @@ export function PracticeControls({
       <XpButton
         primary
         onClick={onRun}
-        disabled={busy}
+        disabled={actionsReady}
         aria-label={
           running
             ? "Running the current code against the current input"

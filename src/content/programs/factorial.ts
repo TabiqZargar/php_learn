@@ -37,6 +37,7 @@ Recursive: 120`,
     "For very large n the integer overflows; PHP promotes to float when needed.",
   ],
 practice: {
+      execution: "pure",
       starterCode: `<?php
 
 // Return $n! where 0! and 1! are both 1.

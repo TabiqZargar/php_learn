@@ -42,6 +42,7 @@ foreach ($numbers as $n) {
     "The early return (exit) works because one divisor is sufficient proof.",
   ],
 practice: {
+      execution: "pure",
       starterCode: `<?php
 
 // Return true when $n is prime, false otherwise.

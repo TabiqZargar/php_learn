@@ -6,8 +6,11 @@ interface SideNavItemProps {
   disabled?: boolean;
   /** Shows a completion checkmark (never the only completion cue). */
   complete?: boolean;
-  /** Optional secondary line (e.g. "Best: 3/5 tests"). */
-  meta?: string;
+  /**
+   * Optional secondary line(s), e.g. "Best: 3/5 tests" plus "Completed".
+   * Each entry renders on its own row.
+   */
+  meta?: string | string[];
   /** Accessible name; derived from label/meta when omitted. */
   ariaLabel?: string;
   onSelect?: () => void;
@@ -22,9 +25,16 @@ export function SideNavItem({
   ariaLabel,
   onSelect,
 }: SideNavItemProps) {
+  const metaLines = meta
+    ? Array.isArray(meta)
+      ? meta
+      : [meta]
+    : [];
   const accessibleLabel =
     ariaLabel ??
-    `${label}${complete ? ", complete" : ""}${meta ? `, ${meta}` : ""}`;
+    `${label}${complete ? ", complete" : ""}${
+      metaLines.length > 0 ? `, ${metaLines.join(", ")}` : ""
+    }`;
 
   const content = (
     <>
@@ -38,7 +48,11 @@ export function SideNavItem({
           ) : null}
           {label}
         </span>
-        {meta ? <span className="side-pane-meta">{meta}</span> : null}
+        {metaLines.map((line) => (
+          <span className="side-pane-meta" key={line}>
+            {line}
+          </span>
+        ))}
       </span>
     </>
   );

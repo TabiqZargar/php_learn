@@ -1,9 +1,12 @@
 import type { PracticeInput, PracticeResult } from "@/lib/practice/types";
 import type { EvaluationResult, EvaluationStatus, TestCaseResult } from "@/lib/practice/evaluation";
+import type { ProgramProgress } from "@/lib/progress/types";
 
 interface PracticeOutputProps {
   result: PracticeResult | null;
   evaluation: EvaluationResult | null;
+  /** Persisted attempt record for the program (drives the Best readout). */
+  programProgress?: ProgramProgress | undefined;
 }
 
 /**
@@ -13,7 +16,7 @@ interface PracticeOutputProps {
  * evaluation results are mutually exclusive: whichever was triggered last
  * replaces the other.
  */
-export function PracticeOutput({ result, evaluation }: PracticeOutputProps) {
+export function PracticeOutput({ result, evaluation, programProgress }: PracticeOutputProps) {
   return (
     <section
       className={evaluation ? "practice-output has-evaluation" : "practice-output"}
@@ -22,7 +25,7 @@ export function PracticeOutput({ result, evaluation }: PracticeOutputProps) {
       <div className="practice-output-title">OUTPUT</div>
       <div className="practice-output-body" role="status">
         {evaluation ? (
-          <EvaluationBody evaluation={evaluation} />
+          <EvaluationBody evaluation={evaluation} programProgress={programProgress} />
         ) : (
           <RunResultBody result={result} />
         )}
@@ -63,23 +66,41 @@ function displayOutput(output: string | undefined): string {
   return output && output.length > 0 ? output : "(nothing printed)";
 }
 
-function EvaluationBody({ evaluation }: { evaluation: EvaluationResult }) {
+function EvaluationBody({
+  evaluation,
+  programProgress,
+}: {
+  evaluation: EvaluationResult;
+  programProgress?: ProgramProgress | undefined;
+}) {
   const allPassed = evaluation.status === "passed";
 
   return (
     <div
       className={`practice-result ${allPassed ? "is-success" : "is-neutral"}`}
     >
-      <p className="eval-summary-title">Solution Check</p>
+      <p className="eval-summary-title">
+        {allPassed ? "Solution Complete" : "Solution Check"}
+      </p>
       <p className={`eval-summary ${allPassed ? "pass" : "fail"}`}>
         {allPassed ? "\u2713" : "\u2717"} {evaluation.passed} / {evaluation.total} tests
         passed
       </p>
+      <p className="eval-verdict">
+        {allPassed
+          ? "All test cases passed."
+          : "Stopped after the first failing test."}
+      </p>
+      {programProgress && (programProgress.bestTotal ?? 0) > 0 ? (
+        <p className="eval-best">
+          Best: {programProgress.bestPassed} / {programProgress.bestTotal} tests
+        </p>
+      ) : null}
       {allPassed ? (
-        <p className="eval-verdict">All test cases passed.</p>
-      ) : (
-        <p className="eval-verdict">Stopped after the first failing test.</p>
-      )}
+        <p className="eval-completed">
+          {"\u2713"} Program completed
+        </p>
+      ) : null}
 
       {evaluation.testResults.length === 0 && evaluation.message ? (
         evaluation.message
@@ -165,6 +186,12 @@ function RunResultBody({ result }: { result: PracticeResult | null }) {
               ? ` · exit code ${result.exitCode}`
               : ""}
           </p>
+          {typeof result.cookiesUpdated === "number" &&
+          result.cookiesUpdated > 0 ? (
+            <p className="practice-result-meta cookies-updated">
+              Cookies updated: {result.cookiesUpdated}
+            </p>
+          ) : null}
         </div>
       );
 
@@ -205,6 +232,8 @@ function RunResultBody({ result }: { result: PracticeResult | null }) {
     case "runtime_unavailable":
     case "execution_disabled":
     case "not_implemented":
+    case "session_expired":
+    case "session_not_found":
       return (
         <div className="practice-result is-neutral">
           {(result.message ?? "Execution is not available.")

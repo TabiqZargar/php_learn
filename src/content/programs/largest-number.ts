@@ -35,6 +35,7 @@ Smallest-case: 7`,
     "The solution scales to any number of inputs if you loop over them.",
   ],
 practice: {
+      execution: "pure",
       starterCode: `<?php
 
 // Return the largest of three numbers.

@@ -32,6 +32,7 @@ Converted 'PHP Academy!' to lowercase: php academy!`,
     "strtoupper() is the mirrored function for the reverse operation.",
   ],
 practice: {
+      execution: "pure",
       starterCode: `<?php
 
 // Return a lowercase copy of $text.

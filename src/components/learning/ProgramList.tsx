@@ -30,13 +30,13 @@ export function ProgramList({ programs, selectedSlug, onSelect }: ProgramListPro
           (bestTotal > 0 || (progress.lastPassed ?? 0) > 0);
 
         const hasTestCases = (program.testCases?.length ?? 0) > 0;
-        let meta: string | undefined;
+        let meta: string | string[] | undefined;
         let ariaLabel: string | undefined;
 
         if (hasTestCases) {
           if (completed) {
-            meta = "Completed";
-            ariaLabel = `${program.title}, completed`;
+            meta = ["Completed", `Best: ${best}/${bestTotal} tests`];
+            ariaLabel = `${program.title}, completed, best ${best} of ${bestTotal} tests passed`;
           } else if (hasAttempt) {
             meta = `Best: ${best}/${bestTotal} tests`;
             ariaLabel = `${program.title}, best ${best} of ${bestTotal} tests passed`;
@@ -44,6 +44,11 @@ export function ProgramList({ programs, selectedSlug, onSelect }: ProgramListPro
             meta = "Not attempted";
             ariaLabel = `${program.title}, not attempted`;
           }
+        } else {
+          // View-only programs (no test cases yet) are clearly marked and
+          // never counted as incomplete practice.
+          meta = "View only";
+          ariaLabel = `${program.title}, view only`;
         }
 
         return (

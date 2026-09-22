@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import type { Lesson } from "@/lib/learning/types";
 import { CodeBlock } from "./CodeBlock";
 import { PagerNav } from "./PagerNav";
@@ -28,6 +29,18 @@ export function LessonView({
   const { isLessonCompleted, toggleLessonCompleted } = useProgress();
   const completed = isLessonCompleted(lesson.slug);
 
+  // Focus moves to the lesson heading when navigation changes the lesson
+  // (never on the very first render, so page load stays unassertive).
+  const headingRef = useRef<HTMLHeadingElement | null>(null);
+  const mounted = useRef(false);
+  useEffect(() => {
+    if (!mounted.current) {
+      mounted.current = true;
+      return;
+    }
+    headingRef.current?.focus();
+  }, [lesson.slug]);
+
   return (
     <article>
       <header className="view-header">
@@ -36,7 +49,9 @@ export function LessonView({
             Lesson {index + 1} of {total} &middot; {lesson.category} &middot; ~
             {lesson.estimatedMinutes} mins
           </p>
-          <h1>{lesson.title}</h1>
+          <h1 ref={headingRef} tabIndex={-1}>
+            {lesson.title}
+          </h1>
           <p className="lead">{lesson.description}</p>
         </div>
         <button

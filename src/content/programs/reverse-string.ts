@@ -31,6 +31,7 @@ Manual check: OK`,
     "strrev() works on single-byte characters; multibyte strings need mb_strrev-style handling.",
   ],
 practice: {
+      execution: "pure",
       starterCode: `<?php
 
 // Return $text with its characters reversed.

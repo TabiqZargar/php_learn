@@ -32,6 +32,7 @@ Descending: 8 6 4 3 2 1`,
     "For associative arrays use asort()/arsort() to keep key-value pairs intact.",
   ],
 practice: {
+      execution: "pure",
       starterCode: `<?php
 
 // Return the array sorted in ascending order.

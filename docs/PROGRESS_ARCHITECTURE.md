@@ -29,6 +29,7 @@ ProgressState {
   version: 1
   lessons:  Record<lessonSlug, LessonProgress>
   programs: Record<programSlug, ProgramProgress>
+  resume?: { type: "lesson" | "program"; slug: string; updatedAt: ISO string }
 }
 ```
 
@@ -37,9 +38,32 @@ Stored under the key `php-academy-progress:v1`.
 - `LessonProgress`: `{ completed, completedAt? }`
 - `ProgramProgress`: `{ completed, completedAt?, bestPassed, bestTotal,
   lastStatus?, lastPassed?, lastTotal?, lastCheckedAt?, maxHintsRevealed }`
+- `resume` is the single last-opened learning location, kept *separate* from
+  the completion records so "finished X" and "opened Y" never collide.
 
 Only progress metadata is persisted. **Source code, program output, inputs,
-expected outputs, diagnostics, and per-run artifacts are never stored.**
+expected outputs, diagnostics, and per-run artifacts are never stored.** The
+resume entry holds only `type`, `slug`, `updatedAt` — nothing else.
+
+### Resume & the version scheme
+
+`resume` is an **optional, additive** field, so adding it did **not** bump the
+stored shape: Phase 7 payloads (no `resume` key) still load as a supported
+version-1 state and keep every completion record. The version stays `1`; a
+future breaking change still lives behind a deliberate bump and explicit
+migration.
+
+Two layers validate a resume on its way in:
+
+1. **Structural (repository)** — `normalizeProgressState` keeps a resume only
+   when `type` is `lesson`/`program`, `slug` is a non-empty string, and
+   `updatedAt` parses as a timestamp. Anything else (or a resume that is not an
+   object at all) is silently dropped, so malformed storage never crashes.
+2. **Registry (provider)** — `recordResume(type, slug)` ignores calls whose
+   slug does not exist in `LESSONS`/`PROGRAMS` (via the pure
+   `isResumeTargetKnown`), and `resumeTarget` (the resolved value consumed by
+   UI) returns `null` when the stored slug is unknown. Unknown or removed
+   content therefore fails gracefully instead of rendering a dead link.
 
 ## Storage & hydration
 
@@ -68,17 +92,62 @@ expected outputs, diagnostics, and per-run artifacts are never stored.**
 | `lastStatus/lastPassed/lastTotal/lastCheckedAt` | Always reflect the newest Check outcome, timestamped at update time |
 | `maxHintsRevealed` | Highest hint level reached; never decreases |
 | Run / editor Reset | Never touches progress |
+| Resume | Set by the last **meaningful open/navigation**: lesson or program selection and prev/next nav in the Academy, opening the practice window, and related-lesson opens from practice. **Not** recorded by hidden renders, desktop window open/close, Run, Reset, or hint reveals. The latest target replaces the previous one; completion records are untouched |
+
+## Resume behavior (end to end)
+
+- **Recording** — `AcademyWindow` records on lesson/program selection
+  (`recordResume`) and prev/next navigation; `PracticeWindow` records its
+  program on mount (which also covers opening practice from the standalone
+  Programs window); a related-lessons click remounts the Academy on the
+  lesson and records it. Nothing is recorded on window open/close, Run,
+  Reset, or hint reveal.
+- **Continue Learning** — the sidebar card (`ContinueLearning.tsx`) resolves
+  the resume against the curriculum and shows the title, kind, and an action:
+  *Continue* (lesson), *Practice* (program), or *Review* when the target is
+  already completed. With no resume it offers *Start Learning*, beginning at
+  the first lesson. A completed target is still shown — there is never an
+  automatic redirect to it.
+- **Hint restoration** — on opening a practice window (after progress has
+  hydrated) the local hint reducer is restored to the persisted
+  `maxHintsRevealed`, clamped to the program's hint count by the pure
+  `hydrate` reducer action (e.g. a persisted `3` for a 2-hint program settles
+  at its full reveal, `99` at the count). The window never reveals beyond the
+  persisted level on its own; the editor-session Reset still sets the local
+  level to `0` without persisting.
+- **Attempt states** — the sidebar program list reads straight from the
+  persisted `ProgramProgress`: `Not attempted`, `Best: X/Y tests`, or
+  `Completed` plus `Best: X/Y tests`. Programs without test cases are marked
+  *View only* and never counted as incomplete. The result panel shows the
+  latest Check outcome, the running Best readout, and "✓ Program completed"
+  on a full pass.
+
+## Navigation
+
+Lesson and program prev/next order comes from the content registry
+(`LESSONS` / `PROGRAMS`), not hardcoded links. Pure helpers in
+`src/lib/learning/navigation.ts` (`previousIndex` / `nextIndex`) return
+`undefined` at the first/last item so the Previous (first) and Next (last)
+controls render disabled; both `AcademyWindow` and `ProgramsWindow` use them.
+Navigating also updates the resume target and preserves completion state.
 
 ## What each consumer shows
 
 - **LessonView** — Mark Complete / "✓ Completed" toggle (`aria-pressed`).
 - **Sidebar lesson list** — completed lessons get a checkmark and an
   accessible "(…, completed)" label (the checkmark is not the only cue).
-- **Sidebar program list** — metadata only for programs with test cases:
-  `Completed`, `Best: X/Y tests`, or `Not attempted`.
+- **Sidebar program list** — metadata for programs with test cases:
+  `Completed` + `Best: X/Y tests`, `Best: X/Y tests`, or `Not attempted`;
+  view-only programs show `View only`.
 - **ProgressSummary** — lessons `X / LESSONS.length` and practice programs
   `X / PROGRAMS.filter(p => p.testCases)`, both derived from the actual
   curriculum, plus the confirm-gated reset.
+- **ContinueLearning** — the sidebar resume card; hidden until hydration,
+  then the resume target or the *Start Learning* fallback.
+- **Practice result panel** — "Solution Check" / "Solution Complete", the
+  per-run `X / Y tests passed`, the running `Best: X / Y tests`, "✓ Program
+  completed" on a full pass, and the per-case expected/actual/diagnostic
+  listing.
 
 ## Boundary (out of scope)
 

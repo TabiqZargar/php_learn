@@ -51,6 +51,33 @@ export interface ProgramTestCase {
   expectedOutput: string;
 }
 
+/**
+ * One HTTP request in a stateful test case. Consecutive steps share the same
+ * isolated practice session (same PHP $_SESSION and cookie jar) so learners
+ * genuinely exercise request-to-request state.
+ */
+export interface StatefulTestStep {
+  /** Values sent as POST form fields for this request. */
+  inputs: Record<string, string>;
+  /** Exact output the request must produce. */
+  expectedOutput: string;
+  /**
+   * Optional jar-state assertions checked after the step. A value string must
+   * be present in the cookie jar; null means the cookie must be absent.
+   */
+  expectedCookies?: Record<string, string | null>;
+}
+
+/** A graded stateful scenario: a fresh isolated session plus sequential steps. */
+export interface StatefulTestCase {
+  /** Stable key referenced in evaluation results (no spaces). */
+  id: string;
+  /** Human-friendly label shown in the result panel. */
+  name: string;
+  /** Steps executed in order; the test stops at the first failing step. */
+  steps: StatefulTestStep[];
+}
+
 /** One progressive hint in a program's practice sequence. */
 export interface ProgramHint {
   /** Unique id within the program (used as a stable key). */
@@ -92,6 +119,11 @@ export interface Program {
   practice?: PracticeConfig;
   /** Graded test cases for Check Solution (present = evaluation supported). */
   testCases?: ProgramTestCase[];
+  /**
+   * Graded stateful scenarios for execution === "stateful" programs. A
+   * program uses exactly one of testCases or statefulTestCases.
+   */
+  statefulTestCases?: StatefulTestCase[];
   /**
    * Progressive guided hints shown in the practice window. Present when
    * hints are authored for the program; a program always has 0 or 3 hints.

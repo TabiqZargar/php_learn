@@ -8,6 +8,8 @@ import { LESSON_OPERATORS } from "./lessons/operators.ts";
 import { LESSON_CONDITIONALS } from "./lessons/conditionals.ts";
 import { LESSON_LOOPS } from "./lessons/loops.ts";
 import { LESSON_FUNCTIONS } from "./lessons/functions.ts";
+import { LESSON_SESSIONS } from "./lessons/sessions.ts";
+import { LESSON_COOKIES } from "./lessons/cookies.ts";
 
 import { PROGRAM_LARGEST_NUMBER } from "./programs/largest-number.ts";
 import { PROGRAM_FACTORIAL } from "./programs/factorial.ts";
@@ -32,6 +34,8 @@ export const LESSONS: Lesson[] = [
   LESSON_CONDITIONALS,
   LESSON_LOOPS,
   LESSON_FUNCTIONS,
+  LESSON_SESSIONS,
+  LESSON_COOKIES,
 ];
 
 /** All practice programs in a sensible study order. */
