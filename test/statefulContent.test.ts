@@ -46,7 +46,7 @@ describe("stateful program content", () => {
     );
   });
 
-  test("exactly the five mysql programs are declared", () => {
+  test("exactly the six mysql programs are declared", () => {
     assert.deepEqual(
       MYSQL_PROGRAMS.map((p) => p.slug).sort(),
       [
@@ -55,6 +55,7 @@ describe("stateful program content", () => {
         "mysql-delete",
         "mysql-insert-read",
         "mysql-update",
+        "php-mysql-login",
       ],
     );
   });
@@ -95,7 +96,7 @@ describe("stateful program content", () => {
         }
       }
     }
-    assert.ok(ids.size >= 40, "expected the 40 designed grading scenarios");
+    assert.ok(ids.size >= 48, "expected the 48 designed grading scenarios");
   });
 
   test("filesystem test cases assert file state with safe bare filenames", () => {
@@ -205,7 +206,7 @@ describe("stateful program content", () => {
     assert.ok(filesystem!.order < mysql!.order);
   });
 
-  test("mysql programs seed only the update/delete pair", () => {
+  test("mysql programs seed only the expected table sets", () => {
     for (const p of MYSQL_PROGRAMS) {
       assert.ok(
         p.practice!.mysql === undefined || Array.isArray(p.practice!.mysql?.seedTables),
@@ -216,24 +217,28 @@ describe("stateful program content", () => {
       const p = PROGRAMS.find((program) => program.slug === slug)!;
       assert.deepEqual(p.practice!.mysql!.seedTables, ["students"]);
     }
+    for (const slug of ["php-mysql-login"]) {
+      const p = PROGRAMS.find((program) => program.slug === slug)!;
+      assert.deepEqual(p.practice!.mysql!.seedTables, ["users"]);
+    }
     for (const slug of ["mysql-connect", "mysql-create-table", "mysql-insert-read"]) {
       const p = PROGRAMS.find((program) => program.slug === slug)!;
       assert.equal(p.practice!.mysql?.seedTables, undefined);
     }
   });
 
-  test("every mysql program has exactly four grading scenarios", () => {
+  test("every mysql program declares its grading scenarios", () => {
     for (const p of MYSQL_PROGRAMS) {
-      assert.equal(p.statefulTestCases!.length, 4, `${p.slug} must define 4 scenarios`);
+      assert.equal(p.statefulTestCases!.length, p.slug === "php-mysql-login" ? 8 : 4, `${p.slug} must define its designed scenarios`);
     }
     assert.ok(
-      MYSQL_PROGRAMS.reduce((n, p) => n + p.statefulTestCases!.length, 0) >= 20,
-      "expected the 20 designed mysql grading scenarios",
+      MYSQL_PROGRAMS.reduce((n, p) => n + p.statefulTestCases!.length, 0) >= 28,
+      "expected the 28 designed mysql grading scenarios",
     );
   });
 
   test("mysql test cases assert database state with safe logical table names", () => {
-    const KNOWN_TABLES = new Set(["students", "products"]);
+    const KNOWN_TABLES = new Set(["students", "products", "users"]);
     for (const p of MYSQL_PROGRAMS) {
       assert.ok(
         p.statefulTestCases!.some((c) => c.steps.some((s) => s.expectedDb)),

@@ -21,6 +21,7 @@ import {
   MysqlRuntimeUnavailableError,
   snapshotMysqlRows,
 } from "@/lib/practice/mysql/runtime";
+import { resolveLoginSeedTokens } from "@/lib/practice/mysql/loginSeed";
 import {
   applySetCookies,
   cookieHeaderForPath,
@@ -98,6 +99,7 @@ export async function POST(request: Request) {
         }),
       destroySession: (id) => destroyStatefulSession(id).then(() => undefined),
       runStep: statefulCheckRunStep(program.slug),
+      resolveRunInputs: resolveLoginSeedTokens,
     };
     if (execution === "filesystem") {
       deps.snapshotFiles = statefulCheckSnapshotFiles();

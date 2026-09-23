@@ -27,6 +27,7 @@ import net from "node:net";
 import { join } from "node:path";
 import { isPhpAvailable, sandboxEnv } from "../localPhpRunner.ts";
 import { mysqlExtensionArgs } from "../mysql/runtime.ts";
+import { LOGIN_SEED_PASSWORDS } from "../mysql/loginSeed.ts";
 import {
   DISABLED_PHP_FUNCTIONS,
   EXECUTION_TIMEOUT_MS,
@@ -184,9 +185,12 @@ function phpServerArgs(session: StatefulPracticeSession, port: number, mysqlExte
 
 /**
  * Redact session-scoped MySQL secrets (password, table prefix, credentials)
- * from any text surfaced back to the learner. Only values long enough to be
- * meaningful are scrubbed so single-character tokens cannot mangle ordinary
- * output; each scrubbed value becomes the shared <hidden> marker.
+ * and the practice's login seed plaintexts from any text surfaced back to the
+ * learner. Seed passwords must hide so a learner script that echoes the
+ * submitted password (a legitimately injected seed secret) cannot leak it into
+ * the visible output. Only values long enough to be meaningful are scrubbed so
+ * single-character tokens cannot mangle ordinary output; each scrubbed value
+ * becomes the shared <hidden> marker.
  */
 export function sanitizeMysqlText(text: string, session: StatefulPracticeSession): string {
   if (!session.mysql) return text;
@@ -195,6 +199,7 @@ export function sanitizeMysqlText(text: string, session: StatefulPracticeSession
     session.mysql.tablePrefix,
     session.mysql.user,
     session.mysql.database,
+    ...LOGIN_SEED_PASSWORDS,
   ].filter((value) => value.length >= 4);
   let sanitized = text;
   for (const secret of secrets) {

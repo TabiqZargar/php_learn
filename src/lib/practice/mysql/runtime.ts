@@ -19,6 +19,7 @@ import { sandboxEnv } from "../localPhpRunner.ts";
 import { MYSQL_SERVER_TIMEOUT_MS, PHP_BIN } from "../limits.ts";
 import { isSafeSqlIdentifier, resolveMysqlEnvConfig } from "./config.ts";
 import type { MysqlEnvConfig } from "./config.ts";
+import { loginUsersSeedJson } from "./loginSeed.ts";
 
 /**
  * The per-session database configuration. `tablePrefix` scopes every table of
@@ -254,6 +255,30 @@ foreach (explode("|", getenv("DP_TABLES")) as $logical) {
                 mysqli_query($conn, "INSERT INTO \`$full\` (id, name, grade) VALUES (1, 'Alice', 85), (2, 'Bob', 92), (3, 'Carol', 78)");
             }
         }
+    } elseif ($logical === "users") {
+        $q = @mysqli_query($conn, "CREATE TABLE IF NOT EXISTS \`$full\` (id INT AUTO_INCREMENT PRIMARY KEY, username VARCHAR(50) NOT NULL UNIQUE, password_hash VARCHAR(255) NOT NULL)");
+        if (!$q) { fwrite(STDERR, "ERR_DDL"); exit(3); }
+        $count = @mysqli_query($conn, "SELECT COUNT(*) AS n FROM \`$full\`");
+        if ($count) {
+            $row = mysqli_fetch_assoc($count);
+            if ((int) $row["n"] === 0) {
+                $users = json_decode(getenv("DP_USERS"), true);
+                if (!is_array($users)) { fwrite(STDERR, "ERR_USERS"); exit(4); }
+                $stmt = mysqli_prepare($conn, "INSERT INTO \`$full\` (id, username, password_hash) VALUES (?, ?, ?)");
+                if (!$stmt) { fwrite(STDERR, "ERR_DDL"); exit(3); }
+                $index = 1;
+                foreach ($users as $entry) {
+                    if (!is_array($entry)) { fwrite(STDERR, "ERR_USERS"); exit(4); }
+                    $id = $index++;
+                    $username = (string) ($entry["username"] ?? "");
+                    $hash = (string) ($entry["hash"] ?? "");
+                    if (!preg_match('/^[A-Za-z][A-Za-z0-9_]{0,63}$/', $username)) { fwrite(STDERR, "ERR_USERS"); exit(4); }
+                    mysqli_stmt_bind_param($stmt, "iss", $id, $username, $hash);
+                    if (!mysqli_stmt_execute($stmt)) { fwrite(STDERR, "ERR_DDL"); exit(3); }
+                }
+                mysqli_stmt_close($stmt);
+            }
+        }
     }
 }
 mysqli_close($conn);
@@ -278,7 +303,10 @@ export async function seedMysqlSessionTables(
   }
   const outcome = await runMysqlPhp(
     SEED_SCRIPT,
-    envFor(config, { DP_TABLES: seedTables.join("|") }),
+    envFor(config, {
+      DP_TABLES: seedTables.join("|"),
+      ...(seedTables.includes("users") ? { DP_USERS: loginUsersSeedJson() } : {}),
+    }),
   );
   if (outcome.exitCode !== 0) {
     return {

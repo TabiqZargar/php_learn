@@ -78,7 +78,9 @@ The MySQL layer is server-only and lives in
   always a typed **runtime_unavailable**, never a wrong answer.
 - `seedMysqlSessionTables(config, seedTables)` — creates + seeds the session's
   tables (`students` gets deterministic rows 1 Alice 85, 2 Bob 92, 3 Carol 78;
-  inserts only when the table is empty so bootstrap is repeatable).
+  `users` gets the two Phase 9D login accounts with deterministic bcrypt
+  hashes supplied over `DP_USERS` via `loginUsersSeedJson()`; inserts only
+  when the table is empty so bootstrap is repeatable).
 - `cleanupMysqlSessionTables(config)` — best-effort `SHOW TABLES LIKE
   '<prefix>%'` then `DROP TABLE IF EXISTS` each.
 - `snapshotMysqlRows(config, tables)` — server-side grader snapshot of the
@@ -122,8 +124,8 @@ output).
 Everything from the filesystem model (sessions, workspace, multi-request
 flows, per-case fresh sessions) applies unchanged. On top of that, a mysql
 session's tables exist in the practice database from the moment the session is
-created — empty by default, or seeded (`students`) for the update/delete
-programs.
+created — empty by default, or seeded (`students` for the update/delete
+programs; `users` for the Phase 9D login program).
 
 - **Reset Session** destroys the session, drops its prefixed tables
   (best-effort) and deletes the workspace.
@@ -147,10 +149,12 @@ Graded tests assert up to three kinds of learner-visible state per step
      (e.g. after DROP).
    - `{ table: "students", rows: [] }` — the table must exist but be **empty**
      (e.g. after deleting every row).
-   - `{ table: "students", rows: [{...}, ...] }` — the table must contain
-     exactly those rows, compared as an **unordered multiset** of
-     column-name → value maps with values normalized to strings, so numeric vs
-     string cells from the driver never cause false mismatches.
+- `{ table: "students", rows: [{...}, ...] }` — the table must contain
+      exactly those rows, compared as an **unordered multiset** of
+      column-name → value maps with values normalized to strings, so numeric vs
+      string cells from the driver never cause false mismatches. The login
+      program asserts `users` rows exactly (id, username, password_hash at
+      every node) because its seeded hashes are deterministic.
 
 `expectedDb` declares **logical** table names; the server applies the session
 prefix. Table names are validated with `isSafeSqlIdentifier` in both content
@@ -169,7 +173,7 @@ availability probe and all helpers use the same flags, so behavior is identical
 across them. When the extension cannot be loaded the session-facing errors
 surface as `runtime_unavailable` — never a fabricated wrong answer.
 
-## Program set (5)
+## Program set (6)
 
 - `mysql-connect` — load config + `mysqli_connect`, verify, close.
 - `mysql-create-table` — CREATE TABLE IF NOT EXISTS / DROP TABLE IF EXISTS /
@@ -177,6 +181,9 @@ surface as `runtime_unavailable` — never a fabricated wrong answer.
 - `mysql-insert-read` — setup table, INSERT rows, SELECT back in id order.
 - `mysql-update` — UPDATE by id with affected-rows semantics (seeded table).
 - `mysql-delete` — DELETE by id with affected-rows semantics (seeded table).
+- `php-mysql-login` — authenticate against a seeded `users` table with a
+  prepared statement + `password_verify()`, hold the identity in `$_SESSION`,
+  and log out (Phase 9D — see `docs/PHP_MYSQL_LOGIN.md`).
 
 ## UI
 

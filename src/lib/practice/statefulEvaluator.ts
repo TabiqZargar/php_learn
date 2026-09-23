@@ -84,6 +84,14 @@ export interface StatefulEvaluatorDeps {
   snapshotFiles?: StatefulSnapshotFiles;
   /** Required when any step declares expectedDb. */
   snapshotDb?: StatefulSnapshotDb;
+  /**
+   * Optional server-side transformation applied to step inputs right before
+   * they are executed (never to the recorded result). Lets a content author
+   * reference a secret placeholder such as "{{PASSWORD:alice}}" that the
+   * resistance resolves only at the execution boundary, so the plaintext
+   * never reaches the recorded inputs, the API response or the client.
+   */
+  resolveRunInputs?: (inputs: Record<string, string>) => Record<string, string>;
 }
 
 export async function evaluateStatefulSolution(
@@ -117,7 +125,15 @@ export async function evaluateStatefulSolution(
       };
     }
     const sessionId = created.id;
-    const outcome = await runCase(code, testCase, deps.runStep, deps.snapshotFiles, deps.snapshotDb, sessionId).finally(
+    const outcome = await runCase(
+      code,
+      testCase,
+      deps.runStep,
+      deps.snapshotFiles,
+      deps.snapshotDb,
+      deps.resolveRunInputs,
+      sessionId,
+    ).finally(
       () => deps.destroySession(sessionId),
     );
     testResults.push(outcome.result);
@@ -142,6 +158,7 @@ async function runCase(
   runStep: StatefulRunStep,
   snapshotFiles: StatefulSnapshotFiles | undefined,
   snapshotDb: StatefulSnapshotDb | undefined,
+  resolveRunInputs: StatefulEvaluatorDeps["resolveRunInputs"],
   sessionId: string,
 ): Promise<{ status: EvaluationStatus; result: TestCaseResult }> {
   const stepCount = testCase.steps.length;
@@ -153,7 +170,8 @@ async function runCase(
     const step = testCase.steps[index];
     lastInputs = step.inputs;
     lastExpected = step.expectedOutput;
-    lastRun = await runStep(sessionId, code, step.inputs);
+    const executedInputs = resolveRunInputs ? resolveRunInputs(step.inputs) : step.inputs;
+    lastRun = await runStep(sessionId, code, executedInputs);
     const note = (message: string) =>
       stepCount > 1 ? `Step ${index + 1} of ${stepCount}: ${message}` : message;
 

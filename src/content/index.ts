@@ -12,6 +12,7 @@ import { LESSON_SESSIONS } from "./lessons/sessions.ts";
 import { LESSON_COOKIES } from "./lessons/cookies.ts";
 import { LESSON_FILESYSTEM } from "./lessons/filesystem.ts";
 import { LESSON_MYSQL } from "./lessons/mysql.ts";
+import { LESSON_PHP_MYSQL_LOGIN } from "./lessons/php-mysql-login.ts";
 
 import { PROGRAM_LARGEST_NUMBER } from "./programs/largest-number.ts";
 import { PROGRAM_FACTORIAL } from "./programs/factorial.ts";
@@ -30,6 +31,7 @@ import { PROGRAM_MYSQL_CREATE_TABLE } from "./programs/mysql-create-table.ts";
 import { PROGRAM_MYSQL_INSERT_READ } from "./programs/mysql-insert-read.ts";
 import { PROGRAM_MYSQL_UPDATE } from "./programs/mysql-update.ts";
 import { PROGRAM_MYSQL_DELETE } from "./programs/mysql-delete.ts";
+import { PROGRAM_PHP_MYSQL_LOGIN } from "./programs/php-mysql-login.ts";
 
 /** All lessons ordered as the curriculum intends. */
 export const LESSONS: Lesson[] = [
@@ -45,6 +47,7 @@ export const LESSONS: Lesson[] = [
   LESSON_COOKIES,
   LESSON_FILESYSTEM,
   LESSON_MYSQL,
+  LESSON_PHP_MYSQL_LOGIN,
 ];
 
 /** All practice programs in a sensible study order. */
@@ -66,6 +69,7 @@ export const PROGRAMS: Program[] = [
   PROGRAM_MYSQL_INSERT_READ,
   PROGRAM_MYSQL_UPDATE,
   PROGRAM_MYSQL_DELETE,
+  PROGRAM_PHP_MYSQL_LOGIN,
 ];
 
 export const FIRST_LESSON = LESSONS[0];

@@ -21,7 +21,7 @@ Run path:   src/lib/practice/localPhpRunner.ts     → local PHP CLI
 Check path: src/lib/practice/{evaluator,statefulEvaluator}.ts
 Stateful:   src/lib/practice/stateful/{runner,sessionManager,cookieJar}.ts
 Filesystem: src/lib/practice/stateful/workspace.ts (expectedFiles snapshot)
-MySQL:      src/lib/practice/mysql/{config,runtime}.ts (server-only helpers)
+MySQL:      src/lib/practice/mysql/{config,runtime,loginSeed}.ts (server-only)
    │  server-only, child_process.spawn()
    ▼
 pure      → php -n … program.php arg1 …
@@ -85,6 +85,15 @@ declare test cases are gradable; every other program is rejected with a typed
   the route snapshots the session's prefixed tables server-side through
   `src/lib/practice/mysql/runtime.ts` (identifiers validated, never through
   learner code). See `docs/MYSQL_PHP_EXECUTION.md`.
+- **Login-seed tokens are resolved only at the check boundary.** The
+  `php-mysql-login` program references its seed passwords through
+  `{{PASSWORD:alice}}`-style tokens in shipped content. The check route passes
+  `resolveRunInputs` (`src/lib/practice/mysql/loginSeed.ts`) into the
+  evaluator, which substitutes the plaintext **only for the inputs actually
+  executed** — the recorded/returned `inputs` keep the token, so neither the
+  API response nor the UI ever sees the plaintext. The stateful execute route
+  (manual Run) is not wrapped. `sanitizeMysqlText` redacts the seed plaintexts
+  from surfaced output. See `docs/PHP_MYSQL_LOGIN.md`.
 - **Expected outputs are client-visible by design.** Test cases ship inside the
   content bundle, which the browser already downloads. This is acceptable for a
   teaching tool, but any future *sensitive* evaluation assets (reference
@@ -135,7 +144,9 @@ explicit per program and validated server-side — never inferred from the slug.
   read / append / delete inside an isolated per-session workspace
   (`filesystem`, Phase 9B — see `docs/FILESYSTEM_PHP_EXECUTION.md`);
   MySQL practice against a dedicated, session-prefixed database
-  (`mysql`, Phase 9C — see `docs/MYSQL_PHP_EXECUTION.md`).
+  (`mysql`, Phase 9C — see `docs/MYSQL_PHP_EXECUTION.md`);
+  MySQL-backed login against a seeded `users` table (`php-mysql-login`,
+  Phase 9D — see `docs/PHP_MYSQL_LOGIN.md`).
 - **Deliberately NOT available:** file uploads. Do not present a program that
   relies on uploads as if it worked.
 
