@@ -5,6 +5,7 @@ import { evaluateSolution } from "@/lib/practice/evaluator";
 import {
   evaluateStatefulSolution,
   type StatefulRunStep,
+  type StatefulSnapshotFiles,
 } from "@/lib/practice/statefulEvaluator";
 import {
   createStatefulSession,
@@ -20,6 +21,7 @@ import {
   cookieHeaderForPath,
   jarToRecord,
 } from "@/lib/practice/stateful/cookieJar";
+import { readWorkspaceFiles } from "@/lib/practice/stateful/workspace";
 import { validateCheckPayload } from "@/lib/practice/checkPayload";
 
 // PHP spawning requires the Node.js runtime — never Edge.
@@ -29,9 +31,11 @@ export const runtime = "nodejs";
  * POST /api/practice/check
  * Body: { programSlug: string, code: string }
  * The client sends only code + slug; the server owns the test cases and
- * every execution. Pure programs reuse the CLI evaluator; stateful programs
- * run sequential requests through per-case isolated sessions. Returns a typed
- * EvaluationResult, or a typed error for malformed/unknown requests.
+ * every execution. Pure programs reuse the CLI evaluator; stateful and
+ * filesystem programs run sequential requests through per-case isolated
+ * sessions (filesystem programs additionally assert on-disk file state via
+ * expectedFiles). Returns a typed EvaluationResult, or a typed error for
+ * malformed/unknown requests.
  */
 export async function POST(request: Request) {
   let body: unknown;
@@ -59,7 +63,7 @@ export async function POST(request: Request) {
 
   const execution = program.practice?.execution ?? "pure";
 
-  if (execution === "stateful") {
+  if (execution === "stateful" || execution === "filesystem") {
     const testCases = program.statefulTestCases;
     if (!testCases || testCases.length === 0) {
       return NextResponse.json(
@@ -69,15 +73,15 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
-    const evaluation = await evaluateStatefulSolution(
-      validated.payload.code,
-      testCases,
-      {
-        createSession: () => createStatefulSession(program.slug),
-        destroySession: (id) => destroyStatefulSession(id).then(() => undefined),
-        runStep: statefulCheckRunStep(program.slug),
-      },
-    );
+    const deps: Parameters<typeof evaluateStatefulSolution>[2] = {
+      createSession: () => createStatefulSession(program.slug),
+      destroySession: (id) => destroyStatefulSession(id).then(() => undefined),
+      runStep: statefulCheckRunStep(program.slug),
+    };
+    if (execution === "filesystem") {
+      deps.snapshotFiles = statefulCheckSnapshotFiles();
+    }
+    const evaluation = await evaluateStatefulSolution(validated.payload.code, testCases, deps);
     return NextResponse.json(evaluation);
   }
 
@@ -132,5 +136,21 @@ function statefulCheckRunStep(expectedProgramSlug: string): StatefulRunStep {
         message: response.message,
         cookies: jarToRecord(nextJar),
       };
+    });
+}
+
+/**
+ * Sandboxed on-disk snapshot wired into the evaluator's expectedFiles checks.
+ * Runs inside the session's serialized chain so a snapshot can never race the
+ * php -S server of the step that just finished.
+ */
+function statefulCheckSnapshotFiles(): StatefulSnapshotFiles {
+  return (sessionId, names) =>
+    serializedStatefulRequest(sessionId, async () => {
+      const resolved = resolveStatefulSession(sessionId);
+      if (!resolved.ok) {
+        return Object.fromEntries(names.map((name) => [name, null]));
+      }
+      return readWorkspaceFiles(resolved.record.session.workspacePath, names);
     });
 }

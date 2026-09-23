@@ -125,6 +125,7 @@ export function PracticeWindow({ programSlug, onOpenLesson }: PracticeWindowProp
   }));
 
   const isStateful = practice.execution === "stateful";
+  const isSessionBased = isStateful || practice.execution === "filesystem";
 
   const handleStartSession = async () => {
     if (isRunning || isChecking || startingSession) return;
@@ -157,7 +158,7 @@ export function PracticeWindow({ programSlug, onOpenLesson }: PracticeWindowProp
 
   const handleRun = async () => {
     if (isRunning || isChecking) return;
-    if (isStateful && !sessionId) {
+    if (isSessionBased && !sessionId) {
       setSessionNotice("Start a practice session before running a request.");
       return;
     }
@@ -165,11 +166,11 @@ export function PracticeWindow({ programSlug, onOpenLesson }: PracticeWindowProp
     setEvaluation(null);
     setIsRunning(true);
     try {
-      const runResult = isStateful
+      const runResult = isSessionBased
         ? await executeStatefulPractice(sessionId ?? "", program.slug, code, inputValues)
         : await practiceRunner.run(code, currentInputs);
       if (
-        isStateful &&
+        isSessionBased &&
         (runResult.status === "session_expired" || runResult.status === "session_not_found")
       ) {
         setSessionId(null);
@@ -235,6 +236,7 @@ export function PracticeWindow({ programSlug, onOpenLesson }: PracticeWindowProp
         <p className="practice-header-sub">
           Practice &middot; {program.difficulty} &middot; {program.category}
           {isStateful ? " &middot; Execution: Stateful PHP" : ""}
+          {practice.execution === "filesystem" ? " &middot; Execution: Filesystem PHP" : ""}
         </p>
       </header>
 
@@ -269,8 +271,9 @@ export function PracticeWindow({ programSlug, onOpenLesson }: PracticeWindowProp
             onChange={setCode}
             label={`PHP code editor for ${program.title}`}
           />
-          {isStateful ? (
+          {isSessionBased ? (
             <StatefulSessionBar
+              execution={isStateful ? "stateful" : "filesystem"}
               active={sessionActive}
               starting={startingSession}
               notice={sessionNotice}
@@ -285,8 +288,8 @@ export function PracticeWindow({ programSlug, onOpenLesson }: PracticeWindowProp
             canReset={codeChanged || inputsChanged}
             running={isRunning}
             checking={isChecking}
-            resetLabel={isStateful ? "Reset Editor" : "Reset"}
-            sessionReady={!isStateful || sessionActive}
+            resetLabel={isSessionBased ? "Reset Editor" : "Reset"}
+            sessionReady={!isSessionBased || sessionActive}
           />
         </div>
       </div>

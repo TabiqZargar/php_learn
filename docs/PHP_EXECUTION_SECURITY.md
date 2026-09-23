@@ -20,10 +20,12 @@ Next.js API routes  src/app/api/practice/{execute,check}/route.ts
 Run path:   src/lib/practice/localPhpRunner.ts     → local PHP CLI
 Check path: src/lib/practice/{evaluator,statefulEvaluator}.ts
 Stateful:   src/lib/practice/stateful/{runner,sessionManager,cookieJar}.ts
+Filesystem: src/lib/practice/stateful/workspace.ts (expectedFiles snapshot)
    │  server-only, child_process.spawn()
    ▼
 pure    → php -n … program.php arg1 …
 stateful → fresh php -n -S 127.0.0.1:PORT (per request) behind a gated router
+filesystem → same gated php -S; learner files persist in the session workspace
 ```
 
 All limits live in one place — `src/lib/practice/limits.ts` — so a reviewer sees
@@ -63,15 +65,19 @@ Key properties of the local runner:
 ## Check Solution evaluation
 
 `POST /api/practice/check` grades a student's code against each program's
-`testCases` (pure programs) or `statefulTestCases` (stateful programs),
-defined in `src/content/programs/*`. Only programs that declare test cases are
-gradable; every other program is rejected with a typed 400. Notable
-properties:
+`testCases` (pure programs) or `statefulTestCases` (stateful **and**
+filesystem programs), defined in `src/content/programs/*`. Only programs that
+declare test cases are gradable; every other program is rejected with a typed
+400. Notable properties:
 
 - **Execution goes through the same sandbox.** The evaluator
   (`src/lib/practice/evaluator.ts`) never spawns PHP itself — the route injects
-  `runLocalPhp`, so every case respects the same limits, temp-dir cleanup and
-  dev-only gate as Run.
+  `runLocalPhp` (pure) or the session runner + session manager, so every case
+  respects the same limits, temp-dir cleanup and dev-only gate as Run.
+- **Filesystem tests can assert on-disk state.** Steps may declare
+  `expectedFiles`; the route then snapshots those files from the session
+  workspace through `src/lib/practice/stateful/workspace.ts` (name-validated,
+  size-capped, never through PHP). See `docs/FILESYSTEM_PHP_EXECUTION.md`.
 - **Expected outputs are client-visible by design.** Test cases ship inside the
   content bundle, which the browser already downloads. This is acceptable for a
   teaching tool, but any future *sensitive* evaluation assets (reference
@@ -79,11 +85,13 @@ properties:
   never be shipped to the client. Do not add a `solutionCode` /
   reference-implementation field to the content model.
 
-## Stateful web runner (sessions & cookies)
+## Stateful web runner (sessions, cookies & filesystem)
 
-Stateful programs run through a per-request `php -S` server instead of the
-CLI so HTTP semantics (sessions, cookies, header flushing) are real. It
-inherits every limit above and adds:
+Stateful and filesystem programs run through a per-request `php -S` server
+instead of the CLI so HTTP semantics (sessions, cookies, header flushing)
+are real. Filesystem programs use the same isolated workspace as their disk:
+learner writes persist across the session's requests. The runner inherits
+every limit above and adds:
 
 - **One fresh server per request**, bound to `127.0.0.1` on an ephemeral
   port, killed (and awaited to detach, on Windows) before the request
@@ -110,18 +118,18 @@ inherits every limit above and adds:
   leaking. The registry is in-memory and single-process (documented in
   `docs/STATEFUL_PHP_EXECUTION.md`); a server restart clears all sessions.
 
-## Capability split (9A vs 9B/9C)
+## Capability split
 
-`PracticeConfig.execution: "pure" | "stateful"` is explicit per program.
-Pure programs use `php` CLI; stateful programs use the `php -S` web runner.
+`PracticeConfig.execution: "pure" | "stateful" | "filesystem"` is explicit
+per program and validated server-side — never inferred from the slug.
 
-- **Available now:** CLI computation (`pure`) and HTTP request lifecycle with
-  `$_SESSION` + `setcookie`/`$_COOKIE` (`stateful`).
-- **Deliberately NOT available:** the filesystem / file uploads and the MySQL
-  database. Exercises that would need them (Phase 9B filesystem, 9C MySQL)
-  are staged but disabled; never present a filesystem or database practice
-  program as if it worked. Any future filesystem/database exercise requires
-  its own isolated runtime and must not reuse this sandbox.
+- **Available now:** CLI computation (`pure`); HTTP request lifecycle with
+  `$_SESSION` + `setcookie`/`$_COOKIE` (`stateful`); file create / write /
+  read / append / delete inside an isolated per-session workspace
+  (`filesystem`, Phase 9B — see `docs/FILESYSTEM_PHP_EXECUTION.md`).
+- **Deliberately NOT available:** file uploads and the MySQL database
+  (Phase 9C). Never present a database practice program as if it worked. Any
+  future database exercise requires its own isolated runtime.
 
 ## What is still NOT safe
 
@@ -141,8 +149,9 @@ The stateful `php -S` runner has the same exposure: `open_basedir` is scoped to
 the session workspace (not a security boundary), network APIs beyond the
 `allow_url_*` stream wrappers may still be reachable, and state persists
 across requests *within a single practice session* by design — so a learner
-could store small amounts of data on the dev machine's session files until the
-session expires. That is the point of the exercise; it is still dev-only.
+could store small amounts of data on the dev machine's session files or inside
+the throwaway workspace until the session expires. That is the point of the
+exercise; it is still dev-only.
 
 This is a **teaching convenience for local development only**. It is not a
 production sandbox and must never run against the published site.

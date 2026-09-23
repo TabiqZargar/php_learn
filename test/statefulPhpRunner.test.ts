@@ -1,8 +1,9 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, readdir, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { waitForNoStatefulWorkspaces } from "./helpers.ts";
 import { runLocalPhp } from "../src/lib/practice/localPhpRunner.ts";
 import { runStatefulRequest } from "../src/lib/practice/stateful/runner.ts";
 import {
@@ -301,10 +302,7 @@ describe("statefulPhpRunner", () => {
     );
 
     test("no stateful workspace directories are left behind", async () => {
-      const leftovers = (await readdir(tmpdir())).filter((name) =>
-        name.startsWith("php-academy-stateful-"),
-      );
-      assert.equal(leftovers.length, 0);
+      await waitForNoStatefulWorkspaces();
     });
   } else {
     test("runtime is reported unavailable when PHP is missing", async () => {

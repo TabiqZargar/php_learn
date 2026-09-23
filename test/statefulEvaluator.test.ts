@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import {
   cookiesMatch,
   evaluateStatefulSolution,
+  filesMatch,
+  isSafeWorkspaceFileName,
   type StatefulEvaluatorDeps,
   type StatefulStepRunResult,
 } from "../src/lib/practice/statefulEvaluator.ts";
@@ -203,5 +205,133 @@ describe("statefulEvaluator", () => {
     assert.ok(!cookiesMatch({ a: "1" }, {}));
     assert.ok(cookiesMatch({ a: null }, {}));
     assert.ok(!cookiesMatch({ a: null }, { a: "x" }));
+  });
+
+  test("filesMatch verifies exact contents and absence", () => {
+    assert.ok(filesMatch({}, {}));
+    assert.ok(filesMatch({ "academy.txt": "data" }, { "academy.txt": "data" }));
+    assert.ok(!filesMatch({ "academy.txt": "data" }, { "academy.txt": "DATA" }));
+    assert.ok(filesMatch({ "academy.txt": null }, { "academy.txt": null }));
+    assert.ok(filesMatch({ "academy.txt": null }, {}));
+    assert.ok(!filesMatch({ "academy.txt": "data" }, { "academy.txt": null }));
+    assert.ok(!filesMatch({ "academy.txt": null }, { "academy.txt": "gone?" }));
+  });
+
+  test("isSafeWorkspaceFileName only accepts bare non-reserved basenames", () => {
+    for (const good of ["academy.txt", "notes-1.log", "vars.json"]) {
+      assert.ok(isSafeWorkspaceFileName(good), `${good} should be safe`);
+    }
+    for (const bad of [
+      "",
+      "..",
+      "../academy.txt",
+      "a/b",
+      "a\\b",
+      "C:academy.txt",
+      "http://x/file",
+      ".hidden",
+      "sess",
+      "program.php",
+      "__token.txt",
+      "router.php",
+      "a".repeat(81),
+      "name\u0000payload",
+    ]) {
+      assert.ok(!isSafeWorkspaceFileName(bad), `${bad} should be rejected`);
+    }
+  });
+
+  test("expectedFiles must hold after a step (snapshot required)", async () => {
+    const filesCase = (expectedFiles: Record<string, string | null>) => [
+      {
+        id: "c1",
+        name: "File check",
+        steps: [{ inputs: {}, expectedOutput: "ok", expectedFiles }],
+      } satisfies StatefulTestCase,
+    ];
+
+    const noSnapshot = await evaluateStatefulSolution(
+      FAKE_CODE,
+      filesCase({ "academy.txt": "data" }),
+      makeDeps(() => ({ status: "success", stdout: "ok" })).deps,
+    );
+    assert.equal(noSnapshot.status, "wrong_answer");
+    assert.match(
+      noSnapshot.testResults[0].message ?? "",
+      /File state verification is not available/,
+    );
+
+    const matching = await evaluateStatefulSolution(
+      FAKE_CODE,
+      filesCase({ "academy.txt": "data" }),
+      {
+        ...makeDeps(() => ({ status: "success", stdout: "ok" })).deps,
+        snapshotFiles: async () => ({ "academy.txt": "data" }),
+      },
+    );
+    assert.equal(matching.status, "passed");
+
+    const mismatching = await evaluateStatefulSolution(
+      FAKE_CODE,
+      filesCase({ "academy.txt": "data" }),
+      {
+        ...makeDeps(() => ({ status: "success", stdout: "ok" })).deps,
+        snapshotFiles: async () => ({ "academy.txt": "DIFFERENT" }),
+      },
+    );
+    assert.equal(mismatching.status, "wrong_answer");
+    assert.match(
+      mismatching.testResults[0].message ?? "",
+      /file state does not match/,
+    );
+  });
+
+  test("a null expected file must be absent", async () => {
+    const cases = [
+      {
+        id: "c1",
+        name: "Delete leaves nothing",
+        steps: [
+          {
+            inputs: { action: "delete" },
+            expectedOutput: "deleted",
+            expectedFiles: { "academy.txt": null },
+          },
+        ],
+      } satisfies StatefulTestCase,
+    ];
+    const absent = await evaluateStatefulSolution(FAKE_CODE, cases, {
+      ...makeDeps(() => ({ status: "success", stdout: "deleted" })).deps,
+      snapshotFiles: async () => ({ "academy.txt": null }),
+    });
+    assert.equal(absent.status, "passed");
+
+    const present = await evaluateStatefulSolution(FAKE_CODE, cases, {
+      ...makeDeps(() => ({ status: "success", stdout: "deleted" })).deps,
+      snapshotFiles: async () => ({ "academy.txt": "leftover" }),
+    });
+    assert.equal(present.status, "wrong_answer");
+  });
+
+  test("unsafe file names fail the case without touching the host", async () => {
+    const cases = [
+      {
+        id: "c1",
+        name: "Escape attempt",
+        steps: [
+          {
+            inputs: {},
+            expectedOutput: "ok",
+            expectedFiles: { "../secret.txt": "data" },
+          },
+        ],
+      } satisfies StatefulTestCase,
+    ];
+    const result = await evaluateStatefulSolution(FAKE_CODE, cases, {
+      ...makeDeps(() => ({ status: "success", stdout: "ok" })).deps,
+      snapshotFiles: async (_id, names) => Object.fromEntries(names.map((n) => [n, null])),
+    });
+    assert.equal(result.status, "runtime_error");
+    assert.match(result.testResults[0].message ?? "", /unsafe file name/);
   });
 });

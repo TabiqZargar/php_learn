@@ -1,6 +1,8 @@
 import { XpButton } from "@/components/ui/XpButton";
 
 interface StatefulSessionBarProps {
+  /** Runtime model of the open program (label + workspace semantics). */
+  execution: "stateful" | "filesystem";
   /** True once a session is started and ready for request runs. */
   active: boolean;
   /** True while the create request is in flight. */
@@ -11,14 +13,21 @@ interface StatefulSessionBarProps {
   onReset: () => void;
 }
 
+const EXECUTION_LABELS: Record<StatefulSessionBarProps["execution"], string> = {
+  stateful: "Execution: Stateful PHP",
+  filesystem: "Execution: Filesystem PHP",
+};
+
 /**
- * Stateful-session strip under the editor (Phase 9A). A session must be
+ * Stateful-session strip under the editor (Phase 9A/9B). A session must be
  * started before Run/Check Solution is meaningful — starting it allocates an
- * isolated PHP workspace whose sessions and cookie jar persist across the
- * learner's requests. Reset Session destroys that server-side session; it is
- * intentionally separate from the editor's Reset button.
+ * isolated PHP workspace whose sessions, cookie jar and (for filesystem
+ * programs) files persist across the learner's requests. Reset Session
+ * destroys that server-side workspace; it is intentionally separate from the
+ * editor's Reset button.
  */
 export function StatefulSessionBar({
+  execution,
   active,
   starting,
   notice,
@@ -28,7 +37,7 @@ export function StatefulSessionBar({
   return (
     <div className={`stateful-bar ${active ? "is-active" : ""}`}>
       <span className="stateful-indicator" aria-hidden="true">
-        Execution: Stateful PHP
+        {EXECUTION_LABELS[execution]}
       </span>
       {active ? (
         <>

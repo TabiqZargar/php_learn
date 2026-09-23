@@ -9,6 +9,7 @@ import {
   validateStatefulCreateBody,
   validateStatefulDestroyBody,
 } from "@/lib/practice/stateful/payload";
+import type { PracticeConfig } from "@/lib/practice/types";
 
 // PHP spawning requires the Node.js runtime — never Edge.
 export const runtime = "nodejs";
@@ -42,7 +43,7 @@ export async function POST(request: Request) {
       { status: 404 },
     );
   }
-  if (program.practice?.execution !== "stateful") {
+  if (!isSessionBasedExecution(program.practice)) {
     return NextResponse.json(
       { error: `Program "${validated.value.programSlug}" does not support stateful practice.` },
       { status: 400 },
@@ -71,4 +72,13 @@ export async function DELETE(request: Request) {
 
   await destroyStatefulSession(validated.value.sessionId);
   return NextResponse.json({ ok: true });
+}
+
+/**
+ * Capabilities that run as raw HTTP requests inside an isolated practice
+ * session (each owns a throwaway workspace). Shared by both route guards so
+ * the workspace-based capabilities stay in one place.
+ */
+function isSessionBasedExecution(practice: PracticeConfig | undefined): boolean {
+  return practice?.execution === "stateful" || practice?.execution === "filesystem";
 }

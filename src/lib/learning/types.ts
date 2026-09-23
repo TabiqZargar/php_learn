@@ -53,8 +53,9 @@ export interface ProgramTestCase {
 
 /**
  * One HTTP request in a stateful test case. Consecutive steps share the same
- * isolated practice session (same PHP $_SESSION and cookie jar) so learners
- * genuinely exercise request-to-request state.
+ * isolated practice session (same PHP $_SESSION, cookie jar and — for
+ * filesystem programs — the same on-disk workspace) so learners genuinely
+ * exercise request-to-request state.
  */
 export interface StatefulTestStep {
   /** Values sent as POST form fields for this request. */
@@ -66,9 +67,21 @@ export interface StatefulTestStep {
    * be present in the cookie jar; null means the cookie must be absent.
    */
   expectedCookies?: Record<string, string | null>;
+  /**
+   * Optional filesystem-state assertions checked after the step (filesystem
+   * capability only). A value string must be the file's exact contents;
+   * null means the file must not exist. Keys are bare relative filenames
+   * inside the session workspace — no path separators, traversal or reserved
+   * names; unsafe keys fail the case rather than touching the host filesystem.
+   */
+  expectedFiles?: Record<string, string | null>;
 }
 
-/** A graded stateful scenario: a fresh isolated session plus sequential steps. */
+/**
+ * Graded stateful scenario: a fresh isolated session (fresh workspace, PHP
+ * session and cookie jar) plus sequential steps. Used by both the "stateful"
+ * and "filesystem" capabilities.
+ */
 export interface StatefulTestCase {
   /** Stable key referenced in evaluation results (no spaces). */
   id: string;
@@ -120,8 +133,9 @@ export interface Program {
   /** Graded test cases for Check Solution (present = evaluation supported). */
   testCases?: ProgramTestCase[];
   /**
-   * Graded stateful scenarios for execution === "stateful" programs. A
-   * program uses exactly one of testCases or statefulTestCases.
+   * Graded stateful scenarios for execution === "stateful" and
+   * execution === "filesystem" programs. A program uses exactly one of
+   * testCases or statefulTestCases.
    */
   statefulTestCases?: StatefulTestCase[];
   /**

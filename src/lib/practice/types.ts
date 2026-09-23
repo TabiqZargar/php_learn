@@ -22,9 +22,13 @@ export interface PracticeInput {
  * Capability model for a practice program. "pure" runs each request against
  * a throwaway CLI process (Phase 1–8). "stateful" runs raw HTTP requests
  * through an isolated php -S session so PHP sessions and cookies behave
- * exactly like a web request (Phase 9A).
+ * exactly like a web request (Phase 9A). "filesystem" reuses the same
+ * isolated per-session workspace so learner file writes, reads, appends and
+ * deletes persist across the session's requests exactly like on disk
+ * (Phase 9B). The capability is explicit per program and validated
+ * server-side — it is never inferred from the slug.
  */
-export type ExecutionCapability = "pure" | "stateful";
+export type ExecutionCapability = "pure" | "stateful" | "filesystem";
 
 /** Editorial config the Practice UI uses to boot a session. */
 export interface PracticeConfig {

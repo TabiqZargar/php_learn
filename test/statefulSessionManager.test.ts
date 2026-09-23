@@ -1,8 +1,7 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
-import { readdir } from "node:fs/promises";
-import { tmpdir } from "node:os";
 import { existsSync } from "node:fs";
+import { waitForNoStatefulWorkspaces } from "./helpers.ts";
 import {
   createStatefulSession,
   destroyStatefulSession,
@@ -85,9 +84,6 @@ describe("statefulSessionManager", () => {
   });
 
   test("no workspace directories are left behind", async () => {
-    const leftovers = (await readdir(tmpdir())).filter((name) =>
-      name.startsWith("php-academy-stateful-"),
-    );
-    assert.equal(leftovers.length, 0);
+    await waitForNoStatefulWorkspaces();
   });
 });

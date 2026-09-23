@@ -21,7 +21,9 @@ export const runtime = "nodejs";
  * Body: { sessionId, programSlug, code, inputs }
  * Runs exactly one raw HTTP request inside the session's isolated php -S
  * sandbox. The cookie jar lives server-side; the client only ever sees the
- * learner-visible status/stdout and a count of changed cookies.
+ * learner-visible status/stdout and a count of changed cookies. For filesystem
+ * programs the session workspace doubles as the learner's disk: files created
+ * here persist across requests until the session is reset or expires.
  */
 export async function POST(request: Request) {
   let body: unknown;
@@ -46,7 +48,7 @@ export async function POST(request: Request) {
       { status: 404 },
     );
   }
-  if (program.practice?.execution !== "stateful") {
+  if (program.practice?.execution !== "stateful" && program.practice?.execution !== "filesystem") {
     return NextResponse.json(
       { error: `Program "${validated.value.programSlug}" does not support stateful practice.` },
       { status: 400 },
