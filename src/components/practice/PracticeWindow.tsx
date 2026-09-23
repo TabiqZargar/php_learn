@@ -125,19 +125,19 @@ export function PracticeWindow({ programSlug, onOpenLesson }: PracticeWindowProp
   }));
 
   const isStateful = practice.execution === "stateful";
-  const isSessionBased = isStateful || practice.execution === "filesystem";
+  const isSessionBased = isStateful || practice.execution === "filesystem" || practice.execution === "mysql";
 
   const handleStartSession = async () => {
     if (isRunning || isChecking || startingSession) return;
     setSessionNotice(null);
     setStartingSession(true);
     try {
-      const created = await createStatefulSession(program.slug);
-      if (!created) {
-        setSessionNotice("Could not start a practice session. Try again.");
+      const outcome = await createStatefulSession(program.slug);
+      if (!outcome.ok) {
+        setSessionNotice(outcome.message);
         return;
       }
-      setSessionId(created.sessionId);
+      setSessionId(outcome.session.sessionId);
       setSessionActive(true);
       setResult(null);
       setEvaluation(null);
@@ -237,6 +237,7 @@ export function PracticeWindow({ programSlug, onOpenLesson }: PracticeWindowProp
           Practice &middot; {program.difficulty} &middot; {program.category}
           {isStateful ? " &middot; Execution: Stateful PHP" : ""}
           {practice.execution === "filesystem" ? " &middot; Execution: Filesystem PHP" : ""}
+          {practice.execution === "mysql" ? " &middot; Execution: MySQL PHP" : ""}
         </p>
       </header>
 
@@ -273,7 +274,7 @@ export function PracticeWindow({ programSlug, onOpenLesson }: PracticeWindowProp
           />
           {isSessionBased ? (
             <StatefulSessionBar
-              execution={isStateful ? "stateful" : "filesystem"}
+              execution={practice.execution as "stateful" | "filesystem" | "mysql"}
               active={sessionActive}
               starting={startingSession}
               notice={sessionNotice}

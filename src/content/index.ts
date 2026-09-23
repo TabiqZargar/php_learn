@@ -11,6 +11,7 @@ import { LESSON_FUNCTIONS } from "./lessons/functions.ts";
 import { LESSON_SESSIONS } from "./lessons/sessions.ts";
 import { LESSON_COOKIES } from "./lessons/cookies.ts";
 import { LESSON_FILESYSTEM } from "./lessons/filesystem.ts";
+import { LESSON_MYSQL } from "./lessons/mysql.ts";
 
 import { PROGRAM_LARGEST_NUMBER } from "./programs/largest-number.ts";
 import { PROGRAM_FACTORIAL } from "./programs/factorial.ts";
@@ -24,8 +25,11 @@ import { PROGRAM_COOKIES } from "./programs/cookies.ts";
 import { PROGRAM_FILE_CREATE } from "./programs/file-create.ts";
 import { PROGRAM_FILE_APPEND } from "./programs/file-append.ts";
 import { PROGRAM_FILE_DELETE } from "./programs/file-delete.ts";
-import { PROGRAM_MYSQL_CONNECTION } from "./programs/mysql-connection.ts";
-import { PROGRAM_MYSQL_LOGIN } from "./programs/mysql-login.ts";
+import { PROGRAM_MYSQL_CONNECT } from "./programs/mysql-connect.ts";
+import { PROGRAM_MYSQL_CREATE_TABLE } from "./programs/mysql-create-table.ts";
+import { PROGRAM_MYSQL_INSERT_READ } from "./programs/mysql-insert-read.ts";
+import { PROGRAM_MYSQL_UPDATE } from "./programs/mysql-update.ts";
+import { PROGRAM_MYSQL_DELETE } from "./programs/mysql-delete.ts";
 
 /** All lessons ordered as the curriculum intends. */
 export const LESSONS: Lesson[] = [
@@ -40,6 +44,7 @@ export const LESSONS: Lesson[] = [
   LESSON_SESSIONS,
   LESSON_COOKIES,
   LESSON_FILESYSTEM,
+  LESSON_MYSQL,
 ];
 
 /** All practice programs in a sensible study order. */
@@ -56,8 +61,11 @@ export const PROGRAMS: Program[] = [
   PROGRAM_FILE_CREATE,
   PROGRAM_FILE_APPEND,
   PROGRAM_FILE_DELETE,
-  PROGRAM_MYSQL_CONNECTION,
-  PROGRAM_MYSQL_LOGIN,
+  PROGRAM_MYSQL_CONNECT,
+  PROGRAM_MYSQL_CREATE_TABLE,
+  PROGRAM_MYSQL_INSERT_READ,
+  PROGRAM_MYSQL_UPDATE,
+  PROGRAM_MYSQL_DELETE,
 ];
 
 export const FIRST_LESSON = LESSONS[0];

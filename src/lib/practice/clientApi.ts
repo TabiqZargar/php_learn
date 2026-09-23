@@ -120,13 +120,19 @@ function evaluationFailure(message: string): EvaluationResult {
   };
 }
 
+export type CreateStatefulSessionOutcome =
+  | { ok: true; session: StatefulSessionInfo }
+  | { ok: false; message: string };
+
 /**
- * Create a fresh isolated stateful practice session for a program. Returns
- * null on any failure — the caller surfaces a notice and lets the user retry.
+ * Create a fresh isolated stateful practice session for a program. Returns an
+ * explicit outcome so the caller can distinguish a transient failure (banner
+ * + retry) from a clear runtime-unavailable notice (e.g. MySQL practice being
+ * unreachable, which the route surfaces with status 503).
  */
 export async function createStatefulSession(
   programSlug: string,
-): Promise<StatefulSessionInfo | null> {
+): Promise<CreateStatefulSessionOutcome> {
   let response: Response;
   try {
     response = await fetch("/api/practice/stateful/session", {
@@ -135,9 +141,18 @@ export async function createStatefulSession(
       body: JSON.stringify({ programSlug }),
     });
   } catch {
-    return null;
+    return { ok: false, message: "Could not reach the local server to start a practice session." };
   }
-  if (!response.ok) return null;
+  if (!response.ok) {
+    let message = `Could not start a practice session (HTTP ${response.status}).`;
+    try {
+      const body = (await response.json()) as { error?: unknown };
+      if (body && typeof body.error === "string") message = body.error;
+    } catch {
+      // Keep the generic message.
+    }
+    return { ok: false, message };
+  }
   try {
     const data = (await response.json()) as unknown;
     if (
@@ -147,12 +162,12 @@ export async function createStatefulSession(
       "programSlug" in data &&
       "expiresAt" in data
     ) {
-      return data as StatefulSessionInfo;
+      return { ok: true, session: data as StatefulSessionInfo };
     }
   } catch {
-    // Fall through to null.
+    // Fall through to the generic failure.
   }
-  return null;
+  return { ok: false, message: "The local server returned an unreadable session response." };
 }
 
 /** Destroy a stateful practice session (best effort). */

@@ -5,6 +5,7 @@ import {
   destroyStatefulSession,
   toStatefulSessionMetadata,
 } from "@/lib/practice/stateful/sessionManager";
+import { MysqlRuntimeUnavailableError } from "@/lib/practice/mysql/runtime";
 import {
   validateStatefulCreateBody,
   validateStatefulDestroyBody,
@@ -18,7 +19,11 @@ export const runtime = "nodejs";
  * POST  /api/practice/stateful/session  -> create a fresh isolated session
  * DELETE /api/practice/stateful/session  -> destroy a session + workspace
  *
- * Only the opaque session id and safe metadata ever reach the client.
+ * Only the opaque session id and safe metadata ever reach the client. A
+ * session for a mysql program provisions the learner-visible database config
+ * file; when the practice database is unavailable the request fails with 503
+ * and a clear reason so the UI can surface "practice unavailable" instead of
+ * a wrong answer.
  */
 export async function POST(request: Request) {
   let body: unknown;
@@ -50,8 +55,21 @@ export async function POST(request: Request) {
     );
   }
 
-  const session = await createStatefulSession(program.slug);
-  return NextResponse.json(toStatefulSessionMetadata(session), { status: 201 });
+  try {
+    const session = await createStatefulSession(program.slug, {
+      capability: program.practice?.execution,
+      mysql: program.practice?.mysql,
+    });
+    return NextResponse.json(toStatefulSessionMetadata(session), { status: 201 });
+  } catch (error) {
+    if (error instanceof MysqlRuntimeUnavailableError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 503 },
+      );
+    }
+    throw error;
+  }
 }
 
 export async function DELETE(request: Request) {
@@ -80,5 +98,9 @@ export async function DELETE(request: Request) {
  * the workspace-based capabilities stay in one place.
  */
 function isSessionBasedExecution(practice: PracticeConfig | undefined): boolean {
-  return practice?.execution === "stateful" || practice?.execution === "filesystem";
+  return (
+    practice?.execution === "stateful" ||
+    practice?.execution === "filesystem" ||
+    practice?.execution === "mysql"
+  );
 }

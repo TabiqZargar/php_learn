@@ -22,8 +22,10 @@ export const runtime = "nodejs";
  * Runs exactly one raw HTTP request inside the session's isolated php -S
  * sandbox. The cookie jar lives server-side; the client only ever sees the
  * learner-visible status/stdout and a count of changed cookies. For filesystem
- * programs the session workspace doubles as the learner's disk: files created
- * here persist across requests until the session is reset or expires.
+ * programs the session workspace doubles as the learner's disk. For mysql
+ * programs the workspace ships the session's academy_db_config.php so the
+ * learner's code can connect to its session-scoped database tables; surfaced
+ * credentials are redacted server-side before they ever reach the client.
  */
 export async function POST(request: Request) {
   let body: unknown;
@@ -48,7 +50,11 @@ export async function POST(request: Request) {
       { status: 404 },
     );
   }
-  if (program.practice?.execution !== "stateful" && program.practice?.execution !== "filesystem") {
+  if (
+    program.practice?.execution !== "stateful" &&
+    program.practice?.execution !== "filesystem" &&
+    program.practice?.execution !== "mysql"
+  ) {
     return NextResponse.json(
       { error: `Program "${validated.value.programSlug}" does not support stateful practice.` },
       { status: 400 },

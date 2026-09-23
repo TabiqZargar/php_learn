@@ -8,6 +8,10 @@
  * server in a finally. HTTP semantics are real, so PHP sessions, cookies and
  * header/body ordering behave exactly like a web request.
  *
+ * MySQL practice sessions boot the server with the mysqli extension loaded so
+ * learner code can connect through the session's academy_db_config.php;
+ * session-scoped secrets are redacted from any surfaced output.
+ *
  * Hard guarantees layered on top of the Phase 1–8 pure runner:
  *   - open_basedir = the session workspace only (no project or home reads)
  *   - session.save_path = <workspace>/sess (no host session dir, isolated)
@@ -22,6 +26,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import net from "node:net";
 import { join } from "node:path";
 import { isPhpAvailable, sandboxEnv } from "../localPhpRunner.ts";
+import { mysqlExtensionArgs } from "../mysql/runtime.ts";
 import {
   DISABLED_PHP_FUNCTIONS,
   EXECUTION_TIMEOUT_MS,
@@ -158,9 +163,10 @@ async function stopServer(child: ReturnType<typeof spawn>): Promise<void> {
   });
 }
 
-function phpServerArgs(session: StatefulPracticeSession, port: number): string[] {
+function phpServerArgs(session: StatefulPracticeSession, port: number, mysqlExtensionArgs: string[]): string[] {
   return [
     "-n",
+    ...mysqlExtensionArgs,
     "-d", "display_errors=1",
     "-d", "display_startup_errors=1",
     "-d", "error_reporting=32767",
@@ -174,6 +180,27 @@ function phpServerArgs(session: StatefulPracticeSession, port: number): string[]
     "-S", `${REQUEST_URL_ROOT.replace("http://", "")}:${port}`,
     join(session.workspacePath, "router.php"),
   ];
+}
+
+/**
+ * Redact session-scoped MySQL secrets (password, table prefix, credentials)
+ * from any text surfaced back to the learner. Only values long enough to be
+ * meaningful are scrubbed so single-character tokens cannot mangle ordinary
+ * output; each scrubbed value becomes the shared <hidden> marker.
+ */
+export function sanitizeMysqlText(text: string, session: StatefulPracticeSession): string {
+  if (!session.mysql) return text;
+  const secrets = [
+    session.mysql.password,
+    session.mysql.tablePrefix,
+    session.mysql.user,
+    session.mysql.database,
+  ].filter((value) => value.length >= 4);
+  let sanitized = text;
+  for (const secret of secrets) {
+    sanitized = sanitized.split(secret).join("<hidden>");
+  }
+  return sanitized;
 }
 
 async function readResponseBody(response: Response): Promise<{
@@ -253,7 +280,8 @@ export async function runStatefulRequest(
   let timer: NodeJS.Timeout | null = null;
   try {
     const port = await freePort();
-    child = spawn(PHP_BIN, phpServerArgs(session, port), {
+    const mysqlExt = session.mysql ? await mysqlExtensionArgs() : [];
+    child = spawn(PHP_BIN, phpServerArgs(session, port, mysqlExt), {
       cwd: session.workspacePath,
       env: sandboxEnv(),
       stdio: ["ignore", "ignore", "ignore"],
@@ -326,7 +354,10 @@ export async function runStatefulRequest(
       return { ...statusResponse("timeout", "Execution timed out after 2 seconds."), executionTimeMs };
     }
 
-    const safeBody = sanitizeWorkspaceText(read.body, session.workspacePath);
+    const safeBody = sanitizeMysqlText(
+      sanitizeWorkspaceText(read.body, session.workspacePath),
+      session,
+    );
 
     if (read.status === "output_limit") {
       return {

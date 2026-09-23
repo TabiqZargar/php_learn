@@ -16,6 +16,14 @@ export const EXECUTION_TIMEOUT_MS = 2000;
 export const STATEFUL_SERVER_STARTUP_MS = 2000;
 
 /**
+ * Wall-clock budget for server-side MySQL helper processes (connect probe,
+ * seed/bootstrap, cleanup and row snapshot). These run the app's own PHP
+ * snippets against the practice database — not learner code — so they get a
+ * slightly larger window than a learner request while staying bounded.
+ */
+export const MYSQL_SERVER_TIMEOUT_MS = 5000;
+
+/**
  * Live span of an in-memory stateful practice session (PHP sessions and the
  * cookie jar are isolated per session and sweep-destroyed after this window).
  * Sessions are a development-only convenience, not a production system.

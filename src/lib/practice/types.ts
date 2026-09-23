@@ -25,10 +25,12 @@ export interface PracticeInput {
  * exactly like a web request (Phase 9A). "filesystem" reuses the same
  * isolated per-session workspace so learner file writes, reads, appends and
  * deletes persist across the session's requests exactly like on disk
- * (Phase 9B). The capability is explicit per program and validated
- * server-side — it is never inferred from the slug.
+ * (Phase 9B). "mysql" is the same isolated session + workspace plus a
+ * restricted connection to a dedicated practice database whose schema and
+ * tables are scoped to the session (Phase 9C). The capability is explicit
+ * per program and validated server-side — it is never inferred from the slug.
  */
-export type ExecutionCapability = "pure" | "stateful" | "filesystem";
+export type ExecutionCapability = "pure" | "stateful" | "filesystem" | "mysql";
 
 /** Editorial config the Practice UI uses to boot a session. */
 export interface PracticeConfig {
@@ -41,6 +43,17 @@ export interface PracticeConfig {
    * start from $_POST / session / request abstractions only.
    */
   starterCode: string;
+  /**
+   * MySQL practice metadata (execution === "mysql" only). Logical table names
+   * the server seeds into this session's database namespace at session
+   * creation (e.g. the update/delete programs seed a deterministic
+   * "students" table so learners mutate known rows). The list is not secret —
+   * it travels with the content bundle — but the actual physical table names
+   * are prefixed per session server-side.
+   */
+  mysql?: {
+    seedTables?: string[];
+  };
 }
 
 export type PracticeResultStatus =

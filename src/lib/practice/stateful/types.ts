@@ -2,8 +2,10 @@
  * Shared types for the stateful execution layer (Phase 9A). These models
  * round-trip through the API as JSON, so every field must stay
  * JSON-serializable and free of host-specific paths.
+ * The MySQL fields below are server-only and MUST never be serialized.
  */
 import type { PracticeResultStatus } from "../types";
+import type { MysqlSessionConfig } from "../mysql/runtime";
 
 /**
  * A live, isolated practice session. `id` is an opaque, cryptographically
@@ -23,6 +25,13 @@ export interface StatefulPracticeSession {
   createdAt: number;
   /** Epoch ms after which the session is rejected and cleaned up. */
   expiresAt: number;
+  /**
+   * Present only for MySQL practice sessions (execution === "mysql"). Server
+   * side only. Contains the credentials the session's config file uses and
+   * the random table prefix that scopes this session's tables inside the
+   * practice database. NEVER shipped to the client.
+   */
+  mysql?: MysqlSessionConfig;
 }
 
 /**

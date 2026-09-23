@@ -75,6 +75,30 @@ export interface StatefulTestStep {
    * names; unsafe keys fail the case rather than touching the host filesystem.
    */
   expectedFiles?: Record<string, string | null>;
+  /**
+   * Optional database-state assertions checked after the step (mysql
+   * capability only). Each entry names a LOGICAL table whose physical name is
+   * session-prefixed server-side. Rows are compared as an unordered multiset
+   * of column-name -> value maps (types normalized to strings). A value of
+   * null means the table must NOT exist; [] means it must exist but be empty;
+   * otherwise exactly those rows must be present.
+   */
+  expectedDb?: DbTableExpectation[];
+}
+
+/**
+ * One expected database-table state for a mysql practice step. Logical table
+ * names must be safe bare SQL identifiers (see isSafeSqlIdentifier) — the
+ * per-session prefix is applied by the server, never authored.
+ */
+export interface DbTableExpectation {
+  /** Logical table name, e.g. "students". */
+  table: string;
+  /**
+   * null = table must not exist; [] = table exists but is empty; otherwise
+   * the table must contain exactly these rows (multiset, any column order).
+   */
+  rows: Record<string, string>[] | null;
 }
 
 /**

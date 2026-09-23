@@ -8,7 +8,14 @@ const SESSION_PROGRAMS = PROGRAMS.filter(
 const FILESYSTEM_PROGRAMS = PROGRAMS.filter(
   (p) => p.practice?.execution === "filesystem",
 );
-const STATEFUL_PROGRAMS = [...SESSION_PROGRAMS, ...FILESYSTEM_PROGRAMS];
+const MYSQL_PROGRAMS = PROGRAMS.filter(
+  (p) => p.practice?.execution === "mysql",
+);
+const STATEFUL_PROGRAMS = [
+  ...SESSION_PROGRAMS,
+  ...FILESYSTEM_PROGRAMS,
+  ...MYSQL_PROGRAMS,
+];
 const PURE_PROGRAMS = PROGRAMS.filter((p) => p.practice && p.practice.execution === "pure");
 
 describe("stateful program content", () => {
@@ -18,7 +25,8 @@ describe("stateful program content", () => {
       assert.ok(
         p.practice!.execution === "pure" ||
           p.practice!.execution === "stateful" ||
-          p.practice!.execution === "filesystem",
+          p.practice!.execution === "filesystem" ||
+          p.practice!.execution === "mysql",
         `${p.slug} must declare execution`,
       );
     }
@@ -38,7 +46,20 @@ describe("stateful program content", () => {
     );
   });
 
-  test("stateful and filesystem programs do not also carry pure testCases", () => {
+  test("exactly the five mysql programs are declared", () => {
+    assert.deepEqual(
+      MYSQL_PROGRAMS.map((p) => p.slug).sort(),
+      [
+        "mysql-connect",
+        "mysql-create-table",
+        "mysql-delete",
+        "mysql-insert-read",
+        "mysql-update",
+      ],
+    );
+  });
+
+  test("stateful, filesystem and mysql programs do not also carry pure testCases", () => {
     for (const p of STATEFUL_PROGRAMS) {
       assert.ok(!p.testCases, `${p.slug} must not declare pure testCases`);
       assert.ok(
@@ -74,7 +95,7 @@ describe("stateful program content", () => {
         }
       }
     }
-    assert.ok(ids.size >= 20, "expected the 20 designed grading scenarios");
+    assert.ok(ids.size >= 40, "expected the 40 designed grading scenarios");
   });
 
   test("filesystem test cases assert file state with safe bare filenames", () => {
@@ -173,6 +194,113 @@ describe("stateful program content", () => {
       const at = slugs.indexOf(slug);
       assert.ok(at > cookies, `${slug} must come after cookies`);
       assert.ok(at < firstMysql, `${slug} must come before mysql material`);
+    }
+  });
+
+  test("the mysql lesson follows the filesystem lesson", () => {
+    const filesystem = getLessonBySlug("filesystem");
+    const mysql = getLessonBySlug("mysql");
+    assert.ok(mysql, "mysql lesson missing from LESSONS");
+    assert.ok(filesystem, "filesystem lesson missing from LESSONS");
+    assert.ok(filesystem!.order < mysql!.order);
+  });
+
+  test("mysql programs seed only the update/delete pair", () => {
+    for (const p of MYSQL_PROGRAMS) {
+      assert.ok(
+        p.practice!.mysql === undefined || Array.isArray(p.practice!.mysql?.seedTables),
+        `${p.slug} mysql.seedTables must be declared structurally`,
+      );
+    }
+    for (const slug of ["mysql-update", "mysql-delete"]) {
+      const p = PROGRAMS.find((program) => program.slug === slug)!;
+      assert.deepEqual(p.practice!.mysql!.seedTables, ["students"]);
+    }
+    for (const slug of ["mysql-connect", "mysql-create-table", "mysql-insert-read"]) {
+      const p = PROGRAMS.find((program) => program.slug === slug)!;
+      assert.equal(p.practice!.mysql?.seedTables, undefined);
+    }
+  });
+
+  test("every mysql program has exactly four grading scenarios", () => {
+    for (const p of MYSQL_PROGRAMS) {
+      assert.equal(p.statefulTestCases!.length, 4, `${p.slug} must define 4 scenarios`);
+    }
+    assert.ok(
+      MYSQL_PROGRAMS.reduce((n, p) => n + p.statefulTestCases!.length, 0) >= 20,
+      "expected the 20 designed mysql grading scenarios",
+    );
+  });
+
+  test("mysql test cases assert database state with safe logical table names", () => {
+    const KNOWN_TABLES = new Set(["students", "products"]);
+    for (const p of MYSQL_PROGRAMS) {
+      assert.ok(
+        p.statefulTestCases!.some((c) => c.steps.some((s) => s.expectedDb)),
+        `${p.slug} must assert database state somewhere`,
+      );
+      for (const c of p.statefulTestCases!) {
+        for (const s of c.steps) {
+          for (const entry of s.expectedDb ?? []) {
+            assert.ok(
+              /^[A-Za-z][A-Za-z0-9_]{0,63}$/.test(entry.table),
+              `${p.slug}/${c.id} references unsafe logical table "${entry.table}"`,
+            );
+            assert.ok(
+              KNOWN_TABLES.has(entry.table),
+              `${p.slug}/${c.id} references unknown logical table "${entry.table}"`,
+            );
+            if (entry.rows !== null) {
+              for (const row of entry.rows) {
+                for (const value of Object.values(row)) {
+                  assert.equal(typeof value, "string");
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  });
+
+  test("mysql programs load the config file and never hard-code credentials", () => {
+    for (const p of MYSQL_PROGRAMS) {
+      const sources = p.code + "\n" + p.practice!.starterCode;
+      assert.match(
+        p.practice!.starterCode,
+        /academy_db_config\.php/,
+        `${p.slug} starter must reference the injected config file`,
+      );
+      assert.match(
+        p.code,
+        /academy_db_config\.php/,
+        `${p.slug} solution must load the injected config file`,
+      );
+      assert.match(
+        p.code,
+        /mysqli_connect/,
+        `${p.slug} solution must use mysqli_connect`,
+      );
+      assert.ok(
+        !/\$user\s*=\s*["']|db_password\s*=|\$dbName\s*=\s*["']/.test(sources),
+        `${p.slug} must not hard-code credentials or placeholders`,
+      );
+    }
+  });
+
+  test("mysql program hints never leak solution details", () => {
+    for (const p of MYSQL_PROGRAMS) {
+      assert.equal(p.hints?.length, 3, `${p.slug} must have exactly 3 hints`);
+      const ids = new Set(p.hints!.map((h) => h.id));
+      assert.equal(ids.size, 3, `${p.slug} hint ids must be unique`);
+      for (const hint of p.hints!) {
+        assert.ok(!hint.content.includes("<?php"), `${p.slug} hint leaks code`);
+        assert.ok(!hint.content.includes("$"), `${p.slug} hint leaks code`);
+        assert.ok(
+          !hint.content.includes("{") && !hint.content.includes("}"),
+          `${p.slug} hint leaks code`,
+        );
+      }
     }
   });
 });

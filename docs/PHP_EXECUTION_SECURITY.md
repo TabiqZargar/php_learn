@@ -21,11 +21,14 @@ Run path:   src/lib/practice/localPhpRunner.ts     → local PHP CLI
 Check path: src/lib/practice/{evaluator,statefulEvaluator}.ts
 Stateful:   src/lib/practice/stateful/{runner,sessionManager,cookieJar}.ts
 Filesystem: src/lib/practice/stateful/workspace.ts (expectedFiles snapshot)
+MySQL:      src/lib/practice/mysql/{config,runtime}.ts (server-only helpers)
    │  server-only, child_process.spawn()
    ▼
-pure    → php -n … program.php arg1 …
-stateful → fresh php -n -S 127.0.0.1:PORT (per request) behind a gated router
-filesystem → same gated php -S; learner files persist in the session workspace
+pure      → php -n … program.php arg1 …
+stateful  → fresh php -n -S 127.0.0.1:PORT (per request) behind a gated router
+filesystem→ same gated php -S; learner files persist in the session workspace
+mysql     → same gated php -S + mysqli flags; learner connects to a dedicated
+             practice DB through session-scoped (prefixed) tables
 ```
 
 All limits live in one place — `src/lib/practice/limits.ts` — so a reviewer sees
@@ -78,6 +81,10 @@ declare test cases are gradable; every other program is rejected with a typed
   `expectedFiles`; the route then snapshots those files from the session
   workspace through `src/lib/practice/stateful/workspace.ts` (name-validated,
   size-capped, never through PHP). See `docs/FILESYSTEM_PHP_EXECUTION.md`.
+- **MySQL tests can assert database state.** Steps may declare `expectedDb`;
+  the route snapshots the session's prefixed tables server-side through
+  `src/lib/practice/mysql/runtime.ts` (identifiers validated, never through
+  learner code). See `docs/MYSQL_PHP_EXECUTION.md`.
 - **Expected outputs are client-visible by design.** Test cases ship inside the
   content bundle, which the browser already downloads. This is acceptable for a
   teaching tool, but any future *sensitive* evaluation assets (reference
@@ -120,16 +127,17 @@ every limit above and adds:
 
 ## Capability split
 
-`PracticeConfig.execution: "pure" | "stateful" | "filesystem"` is explicit
-per program and validated server-side — never inferred from the slug.
+`PracticeConfig.execution: "pure" | "stateful" | "filesystem" | "mysql"` is
+explicit per program and validated server-side — never inferred from the slug.
 
 - **Available now:** CLI computation (`pure`); HTTP request lifecycle with
   `$_SESSION` + `setcookie`/`$_COOKIE` (`stateful`); file create / write /
   read / append / delete inside an isolated per-session workspace
-  (`filesystem`, Phase 9B — see `docs/FILESYSTEM_PHP_EXECUTION.md`).
-- **Deliberately NOT available:** file uploads and the MySQL database
-  (Phase 9C). Never present a database practice program as if it worked. Any
-  future database exercise requires its own isolated runtime.
+  (`filesystem`, Phase 9B — see `docs/FILESYSTEM_PHP_EXECUTION.md`);
+  MySQL practice against a dedicated, session-prefixed database
+  (`mysql`, Phase 9C — see `docs/MYSQL_PHP_EXECUTION.md`).
+- **Deliberately NOT available:** file uploads. Do not present a program that
+  relies on uploads as if it worked.
 
 ## What is still NOT safe
 
@@ -152,6 +160,16 @@ across requests *within a single practice session* by design — so a learner
 could store small amounts of data on the dev machine's session files or inside
 the throwaway workspace until the session expires. That is the point of the
 exercise; it is still dev-only.
+
+MySQL practice adds a further, deliberate interface: learner code connects
+with the session credentials to a **dedicated practice database** whose tables
+are prefixed per session, and the server-side helpers run probe / seed /
+cleanup / snapshot queries with the same credentials. The account is granted
+rights on `php_academy_practice.*` only (never `*.*`), but the GRANT cannot
+scope per prefix — a guessed prefix (`s` + 48 random bits) would still be
+writable by another session. Point `MYSQL_HOST` at the local practice server
+only. See `docs/MYSQL_PHP_EXECUTION.md` for the full boundaries and residual
+risks.
 
 This is a **teaching convenience for local development only**. It is not a
 production sandbox and must never run against the published site.

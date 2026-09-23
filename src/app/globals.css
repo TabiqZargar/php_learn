@@ -11,7 +11,7 @@
   --background: #ffffff;
   --foreground: #101010;
 
-  --font-ui: Tahoma, "Segoe UI", "Trebuchet MS", Geneva, Verdana, sans-serif;
+  --font-ui: Tahoma, "Segoe UI", Arial, sans-serif;
   --font-code: "Cascadia Mono", "Consolas", "Courier New", monospace;
 
   /* Windows XP inspired chrome */
@@ -99,6 +99,14 @@ body {
 }
 
 button {
+  font-family: inherit;
+}
+
+/* Form controls take the UI font unless a component sets its own (the code
+   editor textarea explicitly stays in --font-code). */
+input,
+textarea,
+select {
   font-family: inherit;
 }
 
