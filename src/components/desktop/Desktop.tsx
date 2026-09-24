@@ -1,14 +1,21 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import type { CSSProperties } from "react";
-import type { AcademyWindowPayload, PracticeWindowPayload, WindowId, WindowState } from "./types";
+import type { CSSProperties, ReactNode } from "react";
+import type {
+  AcademyWindowPayload,
+  PracticeWindowPayload,
+  ReferenceWindowPayload,
+  WindowId,
+  WindowState,
+} from "./types";
 import { WINDOW_TITLES } from "./types";
 import { DesktopIcon } from "./DesktopIcon";
 import { Window } from "../windows/Window";
 import { AcademyWindow } from "../learning/AcademyWindow";
 import { ProgramsWindow } from "../learning/ProgramsWindow";
 import { PracticeWindow } from "../practice/PracticeWindow";
+import { ReferenceWindow } from "../reference/ReferenceWindow";
 import { PlaceholderContent } from "../windows/PlaceholderContent";
 import { MenuBar } from "../navigation/MenuBar";
 import { StatusBar } from "../ui/StatusBar";
@@ -20,66 +27,75 @@ import {
   ReferenceIcon,
   ComputerIcon,
 } from "../icons/AppIcons";
+import type { ReferenceCategoryId } from "@/lib/reference/types";
 
-const INITIAL_WINDOWS: WindowState[] = [
-  { id: "academy", title: WINDOW_TITLES.academy, minimized: false, maximized: false },
+interface WindowStateWithId extends WindowState {
+  id: WindowId;
+}
+
+const startMenuEntries: StartMenuEntry[] = [
+  { id: "academy", label: "PHP Academy", icon: <AcademyIcon size={16} /> },
+  { id: "programs", label: "Programs", icon: <ProgramsIcon size={16} /> },
+  { id: "reference", label: "PHP Reference", icon: <ReferenceIcon size={16} /> },
+  { id: "computer", label: "My Computer", icon: <ComputerIcon size={16} /> },
+  { id: "practice", label: "PHP Practice", icon: <ProgramsIcon size={16} /> },
 ];
+
+const WINDOW_TITLES_FROM_TYPES = WINDOW_TITLES;
 
 const DEFAULT_STYLES: Record<WindowId, CSSProperties> = {
   academy: {
     width: "min(94vw, 840px)",
-    height: "min(calc(100vh - 60px), 560px)",
+    height: "min(calc(100vh - 48px), 560px)",
     left: "max(6px, calc(50% - min(420px, 47vw)))",
     top: "6px",
   },
   programs: {
     width: "min(92vw, 720px)",
-    height: "min(calc(100vh - 60px), 500px)",
+    height: "min(calc(100vh - 48px), 460px)",
     left: "max(6px, calc(50% - min(360px, 46vw)))",
-    top: "max(6px, calc(8vh))",
+    top: "max(6px, calc(6vh))",
   },
   reference: {
-    width: "min(84vw, 420px)",
-    height: "min(56vh, 300px)",
-    left: "max(6px, calc(58% - 40px))",
-    top: "max(6px, calc(24vh))",
+    width: "min(88vw, 560px)",
+    height: "min(calc(100vh - 48px), 480px)",
+    left: "max(6px, calc(50% - min(280px, 44vw)))",
+    top: "max(6px, calc(8vh))",
   },
   computer: {
-    width: "min(84vw, 400px)",
-    height: "min(52vh, 280px)",
-    left: "max(6px, calc(42% - 40px))",
-    top: "max(6px, calc(40vh))",
+    width: "min(84vw, 420px)",
+    height: "min(52vh, 300px)",
+    left: "max(6px, calc(46% - 40px))",
+    top: "max(6px, calc(34vh))",
   },
   practice: {
-    width: "min(96vw, 1000px)",
-    height: "min(calc(100vh - 40px), 640px)",
-    left: "max(4px, calc(50% - min(500px, 48vw)))",
-    top: "max(4px, calc(4vh))",
+    width: "min(94vw, 1000px)",
+    height: "min(calc(100vh - 48px), 600px)",
+    left: "max(6px, calc(50% - min(500px, 47vw)))",
+    top: "max(6px, calc(6vh))",
   },
-};
-
-const TITLEBAR_ICONS: Record<WindowId, React.ReactNode> = {
-  academy: <AcademyIcon size={16} />,
-  programs: <ProgramsIcon size={16} />,
-  reference: <ReferenceIcon size={16} />,
-  computer: <ComputerIcon size={16} />,
-  practice: <ProgramsIcon size={16} />,
 };
 
 export function Desktop() {
-  const [windows, setWindows] = useState<WindowState[]>(INITIAL_WINDOWS);
-  const [activeWindowId, setActiveWindowId] = useState<string | null>("academy");
+  const [windows, setWindows] = useState<WindowStateWithId[]>([
+    { id: "academy", title: WINDOW_TITLES.academy, minimized: false, maximized: false },
+  ]);
+  const [activeWindowId, setActiveWindowId] = useState<WindowId | null>("academy");
   const [startMenuOpen, setStartMenuOpen] = useState(false);
   const [selectedIcon, setSelectedIcon] = useState<string | null>(null);
+  const practiceRequestRef = useRef(0TryKey);
+  const referenceRequestRef = useRef(0);
   const lessonRequestRef = useRef(0);
 
-  const openWindow = useCallback((id: WindowId) => {
+  const openAppWindow = useCallback((id: WindowId) => {
     setStartMenuOpen(false);
     setWindows((current) => {
       const existing = current.find((win) => win.id === id);
       if (existing) {
         return current.map((win) =>
-          win.id === id ? { ...win, minimized: false } : win,
+          win.id === id
+            ? { ...win, minimized: false, maximized: false }
+            : win,
         );
       }
       return [
@@ -92,78 +108,44 @@ export function Desktop() {
 
   const openPractice = useCallback((programSlug: string) => {
     setStartMenuOpen(false);
-    setWindows((current) => {
-      const existing = current.find((win) => win.id === "practice");
-      if (existing) {
-        return current.map((win) =>
-          win.id === "practice"
-            ? { ...win, minimized: false, payload: { programSlug } }
-            : win,
-        );
-      }
-      return [
-        ...current,
-        {
-          id: "practice",
-          title: WINDOW_TITLES.practice,
-          minimized: false,
-          maximized: false,
-          payload: { programSlug },
-        },
-      ];
-    });
+    const practiceRequest = practiceRequestRef.current + 1;
+    practiceRequestRef.current = practiceRequest;
+    setWindows((current) =>
+      current.map((win) =>
+        win.id === "practice"
+          ? { ...win, minimized: false, payload: { programSlug, practiceRequest } }
+          : win,
+      ),
+    );
     setActiveWindowId("practice");
+  }, []);
+
+  const openReference = useCallback((categoryId: ReferenceCategoryId) => {
+    setStartMenuOpen(false);
+    const referenceRequest = referenceRequestRef.current + 1;
+    referenceRequestRef.current = referenceRequest;
+    setWindows((current) =>
+      current.map((win) =>
+        win.id === "reference"
+          ? { ...win, minimized: false, payload: { categoryId, referenceRequest } }
+          : win,
+      ),
+    );
+    setActiveWindowId("reference");
   }, []);
 
   const openLesson = useCallback((lessonSlug: string) => {
     setStartMenuOpen(false);
     const lessonRequest = lessonRequestRef.current + 1;
     lessonRequestRef.current = lessonRequest;
-    setWindows((current) => {
-      const existing = current.find((win) => win.id === "academy");
-      if (existing) {
-        return current.map((win) =>
-          win.id === "academy"
-            ? { ...win, minimized: false, payload: { lessonSlug, lessonRequest } }
-            : win,
-        );
-      }
-      return [
-        ...current,
-        {
-          id: "academy",
-          title: WINDOW_TITLES.academy,
-          minimized: false,
-          maximized: false,
-          payload: { lessonSlug, lessonRequest },
-        },
-      ];
-    });
-    setActiveWindowId("academy");
-  }, []);
-
-  const closeWindow = useCallback((id: WindowId) => {
-    setWindows((current) => current.filter((win) => win.id !== id));
-    setActiveWindowId((current) => {
-      if (current !== id) return current;
-      return null;
-    });
-  }, []);
-
-  const minimizeWindow = useCallback((id: WindowId) => {
-    setWindows((current) =>
-      current.map((win) => (win.id === id ? { ...win, minimized: true } : win)),
-    );
-    setActiveWindowId((current) => (current === id ? null : current));
-  }, []);
-
-  const toggleMaximized = useCallback((id: WindowId) => {
-    setActiveWindowId(id);
     setWindows((current) =>
       current.map((win) =>
-        win.id === id ? { ...win, maximized: !win.maximized } : win,
+        win.id === "academy"
+          ? { ...win, minimized: false, payload: { lessonSlug, lessonRequest } }
+          : win,
       ),
     );
+    setActiveWindowId("academy");
   }, []);
 
   const activateWindow = useCallback((id: WindowId) => {
@@ -175,13 +157,7 @@ export function Desktop() {
     );
   }, []);
 
-  // Render the active window on top by giving it a higher z-index.
-  const renderedWindows = windows.map((win, index) => ({
-    ...win,
-    zIndex: 10 + index + (win.id === activeWindowId ? windows.length : 0),
-  }));
-
-  const renderContent = (win: WindowState) => {
+  const renderContent = (win: WindowStateWithId) => {
     switch (win.id) {
       case "academy": {
         const payload = win.payload as AcademyWindowPayload | undefined;
@@ -189,31 +165,40 @@ export function Desktop() {
           <AcademyWindow
             key={payload ? `lesson-${payload.lessonRequest}` : "static"}
             initialLessonSlug={payload?.lessonSlug}
+            initialLessonRequest={payload?.lessonRequest}
             onOpenPractice={(program) => openPractice(program.slug)}
+            onOpenReference={(categoryId) => openReference(categoryId)}
           />
         );
       }
       case "programs":
-        return <ProgramsWindow onOpenPractice={(program) => openPractice(program.slug)} />;
+        return (
+          <ProgramsWindow
+            onOpenPractice={(program) => openPractice(program.slug)}
+            onOpenReference={(categoryId) => openReference(categoryId)}
+          />
+        );
       case "practice": {
         const payload = win.payload as PracticeWindowPayload | undefined;
         return (
           <PracticeWindow
-            key={payload?.programSlug ?? "none"}
-            programSlug={payload?.programSlug}
+            key={payload ? `practice-${payload.programSlug}` : "static"}
+            initialProgramSlug={payload?.programSlug}
             onOpenLesson={openLesson}
+            onOpenReference={(categoryId) => openReference(categoryId)}
           />
         );
       }
-      case "reference":
+      case "reference": {
+        const payload = win.payload as ReferenceWindowPayload | undefined;
         return (
-          <PlaceholderContent
-            icon={<ReferenceIcon size={44} />}
-            heading="PHP Reference"
-            description="Syntax and function reference"
-            note="The reference section arrives in a later phase. Cheat sheets, function signatures and quick examples will appear here."
+          <ReferenceWindow
+            key={payload ? `reference-${payload.categoryId}` : "static"}
+            categoryId={payload?.categoryId}
+            request={payload?.referenceRequest}
           />
         );
+      }
       case "computer":
         return (
           <PlaceholderContent
@@ -227,103 +212,78 @@ export function Desktop() {
     }
   };
 
-  const startMenuEntries: StartMenuEntry[] = [
-    { id: "academy", label: "PHP Academy", icon: <AcademyIcon size={30} /> },
-    { id: "programs", label: "Programs", icon: <ProgramsIcon size={30} /> },
-    { id: "reference", label: "PHP Reference", icon: <ReferenceIcon size={30} /> },
-    {
-      label: "Settings",
-      icon: <ComputerIcon size={30} />,
-      disabled: true,
-      hint: "Settings arrive in a later phase",
-    },
-    {
-      label: "Help",
-      icon: <ReferenceIcon size={30} />,
-      disabled: true,
-      hint: "Help arrives in a later phase",
-    },
-  ];
-
-  const desktopIcons: Array<{
-    id: WindowId;
-    label: string;
-    icon: React.ReactNode;
-    onOpen: () => void;
-  }> = [
-    {
-      id: "academy",
-      label: "PHP Academy",
-      icon: <AcademyIcon />,
-      onOpen: () => openWindow("academy"),
-    },
-    {
-      id: "programs",
-      label: "Programs",
-      icon: <ProgramsIcon />,
-      onOpen: () => openWindow("programs"),
-    },
-    {
-      id: "reference",
-      label: "Reference",
-      icon: <ReferenceIcon />,
-      onOpen: () => openWindow("reference"),
-    },
-    {
-      id: "computer",
-      label: "My Computer",
-      icon: <ComputerIcon />,
-      onOpen: () => openWindow("computer"),
-    },
-  ];
-
   return (
     <div className="desktop-shell">
       <div className="desktop-wallpaper" aria-hidden="true" />
 
       <div className="desktop-area">
         <div className="desktop-icons" role="list" aria-label="Desktop icons">
-          {desktopIcons.map((icon) => (
+          {[
+            {
+              id: "academy",
+              label: "PHP Academy",
+              icon: <AcademyIcon size={40} />,
+            },
+            { id: "programs", label: "Programs", icon: <ProgramsIcon size={40} /> },
+            {
+              id: "reference",
+              label: "PHP Reference",
+              icon: <ReferenceIcon size={40} />,
+            },
+            { id: "computer", label: "My Computer", icon: <ComputerIcon size={40} /> },
+          ].map((icon) => (
             <div key={icon.id} role="listitem">
               <DesktopIcon
                 label={icon.label}
                 icon={icon.icon}
                 selected={selectedIcon === icon.id}
                 onSelect={() => setSelectedIcon(icon.id)}
-                onActivate={icon.onOpen}
+                onActivate={() => openAppWindow(icon.id)}
               />
             </div>
           ))}
         </div>
 
-        <div className="window-layer">
-          {renderedWindows.map((win) => (
+        <div className="windows">
+          {windows.map((win) => (
             <Window
               key={win.id}
+              id={win.id}
               title={win.title}
-              icon={TITLEBAR_ICONS[win.id]}
               isActive={activeWindowId === win.id}
               isMinimized={win.minimized}
               isMaximized={win.maximized}
-              style={{ ...DEFAULT_STYLES[win.id], zIndex: win.zIndex }}
-              menuBar={win.id === "academy" ? <MenuBar /> : undefined}
-              statusBar={
-                win.id === "academy" ? (
-                  <StatusBar left="Ready" right="PHP Academy — Phase 4" />
-                ) : win.id === "practice" ? (
-                  <StatusBar left="PHP Practice" right="Execution: local PHP CLI" />
-                ) : undefined
-              }
+              style={DEFAULT_STYLES[win.id]}
+              icon={WINDOW_TITLES_FROM_TYPES[win.id] ? <AcademyIcon size={16} /> : undefined}
               onActivate={() => activateWindow(win.id)}
-              onMinimize={() => minimizeWindow(win.id)}
-              onMaximizeToggle={() => toggleMaximized(win.id)}
-              onClose={() => closeWindow(win.id)}
+              onMinimize={() =>
+                setWindows((current) =>
+                  current.map((w) =>
+                    w.id === win.id ? { ...w, minimized: true } : w,
+                  ),
+                )
+              }
+              onMaximizeToggle={() =>
+                setWindows((current) =>
+                  current.map((w) =>
+                    w.id === win.id
+                      ? { ...w, maximized: !w.maximized }
+                      : w,
+                  ),
+                )
+              }
+              onClose={() =>
+                setWindows((current) => current.filter((w) => w.id !== win.id))
+              }
             >
-              {renderContent(win)}
+              {win.minimized ? null : renderContent(win)}
             </Window>
           ))}
         </div>
       </div>
+
+      <MenuBar />
+      <StatusBar />
 
       <Taskbar
         windows={windows}
@@ -331,8 +291,7 @@ export function Desktop() {
         startMenuOpen={startMenuOpen}
         startMenuEntries={startMenuEntries}
         onToggleStartMenu={() => setStartMenuOpen((open) => !open)}
-        onOpenFromStartMenu={openWindow}
-        onCloseStartMenu={() => setStartMenuOpen(false)}
+        onOpenFromStartMenu={(id) => openAppWindow(id)}
         onActivateWindow={activateWindow}
       />
     </div>

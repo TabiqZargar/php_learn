@@ -1,16 +1,26 @@
+import type { ReferenceCategoryId } from "@/lib/reference/types";
+
 export type WindowId = "academy" | "programs" | "reference" | "computer" | "practice";
 
-export interface PracticeWindowPayload {
-  programSlug: string;
-}
+export type AcademyWindowPayload = {
+  lessonSlug?: string;
+  lessonRequest?: number;
+};
 
-export interface AcademyWindowPayload {
-  lessonSlug: string;
-  /** Bumped on every related-lesson click so repeated clicks still remount. */
-  lessonRequest: number;
-}
+export type PracticeWindowPayload = {
+  programSlug?: string;
+};
 
-export type WindowPayload = PracticeWindowPayload | AcademyWindowPayload;
+export type ReferenceWindowPayload = {
+  categoryId?: ReferenceCategoryId;
+  /** Bumped by the desktop when a lesson/program re-opens the reference. */
+  request?: number;
+};
+
+export type WindowPayload =
+  | AcademyWindowPayload
+  | PracticeWindowPayload
+  | ReferenceWindowPayload;
 
 export interface WindowState {
   id: WindowId;
