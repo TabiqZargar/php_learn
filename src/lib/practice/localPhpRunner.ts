@@ -103,6 +103,18 @@ export async function isPhpAvailable(): Promise<boolean> {
 }
 
 /**
+ * The PHP CLI prints the absolute path of the throwaway script (e.g.
+ * C:\Users\...\Temp\php-academy-AbC123\program.php). The temp path is an
+ * implementation detail, so only a plain filename is exposed. Applied to
+ * every runner result so no endpoint leaks the host temp path.
+ */
+export function sanitizePhpOutput(text: string): string {
+  const windowsPath = /[A-Za-z]:\\(?:[^\\\n]+\\)*php-academy-[^\\\n]*\\program\.php/g;
+  const posixPath = /\/(?:[^/\n]+\/)*php-academy-[^/\n]+\/program\.php/g;
+  return text.replace(windowsPath, "program.php").replace(posixPath, "program.php");
+}
+
+/**
  * Run untrusted PHP locally inside a throwaway directory.
  * Resolves with a PracticeResult in every path — it never rejects.
  */
@@ -276,8 +288,8 @@ function runScript(
     });
 
     child.once("close", (exitCode, signal) => {
-      const stdout = stdoutChunks.join("");
-      const stderr = stderrChunks.join("");
+      const stdout = sanitizePhpOutput(stdoutChunks.join(""));
+      const stderr = sanitizePhpOutput(stderrChunks.join(""));
       const executionTimeMs = Date.now() - startedAt;
       const base = { stdout, stderr, executionTimeMs };
 

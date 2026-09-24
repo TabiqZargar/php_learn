@@ -7,7 +7,10 @@ import {
   MAX_INPUT_BYTES,
   MAX_SOURCE_BYTES,
 } from "../src/lib/practice/limits.ts";
-import { runLocalPhp } from "../src/lib/practice/localPhpRunner.ts";
+import {
+  runLocalPhp,
+  sanitizePhpOutput,
+} from "../src/lib/practice/localPhpRunner.ts";
 import type { PracticeInput } from "../src/lib/practice/types.ts";
 
 // Every execution test assumes development mode — the only mode that may
@@ -63,6 +66,25 @@ describe("localPhpRunner", () => {
       makeInput({ name: "big", value: "y".repeat(MAX_INPUT_BYTES + 1) }),
     ]);
     assert.equal(result.status, "invalid_request");
+  });
+
+  describe("sanitizePhpOutput", () => {
+    test("Windows temp paths are replaced with a bare filename", () => {
+      const input =
+        "Parse error in C:\\Users\\Tabiq\\AppData\\Local\\Temp\\php-academy-AbC123\\program.php on line 3";
+      assert.equal(sanitizePhpOutput(input), "Parse error in program.php on line 3");
+    });
+
+    test("POSIX temp paths are replaced with a bare filename", () => {
+      const input =
+        "Fatal error in /tmp/php-academy-xYz987/program.php on line 2";
+      assert.equal(sanitizePhpOutput(input), "Fatal error in program.php on line 2");
+    });
+
+    test("non-temp text passes through untouched", () => {
+      const input = "plain output /no/php-academy/here and \\other\\program.php";
+      assert.equal(sanitizePhpOutput(input), input);
+    });
   });
 
   if (phpAvailable) {
@@ -140,6 +162,13 @@ describe("localPhpRunner", () => {
         [],
       );
       assert.equal(result.status, "output_limit");
+    });
+
+    test("the real throwaway script path is scrubbed from output", async () => {
+      const result = await runLocalPhp("<?php echo __FILE__;", []);
+      assert.equal(result.status, "success");
+      assert.equal(result.stdout, "program.php");
+      assert.doesNotMatch(result.stdout ?? "", /php-academy-/);
     });
 
     test("temp files are cleaned up after a run", async () => {

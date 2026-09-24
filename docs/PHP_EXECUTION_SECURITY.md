@@ -52,6 +52,13 @@ Key properties of the local runner:
 - **Throwaway directory.** Code is written to a fresh `os.tmpdir()` directory
   (`php-academy-*`) that is deleted after every run. Nothing is ever written to
   project files, and the working directory is that throwaway directory.
+- **Temp-path output is scrubbed.** PHP prints the absolute path of the
+  throwaway script in diagnostics (e.g.
+  `C:\...\Temp\php-academy-AbC123\program.php`). `sanitizePhpOutput`
+  (`src/lib/practice/localPhpRunner.ts`) replaces that path with a bare
+  `program.php` on **every** runner result — the Run route, the pure check
+  route and the evaluator diagnostics — so the host temp path never reaches
+  the client.
 - **Big-OS hammer limits.** The Node process enforces a 2 s wall-clock timeout,
   a 64 KB output cap (process killed at the limit), a 64 KB source cap and a
   16 KB input cap. The PHP side is launched with `-n` (no user `php.ini`),
@@ -92,8 +99,9 @@ declare test cases are gradable; every other program is rejected with a typed
   evaluator, which substitutes the plaintext **only for the inputs actually
   executed** — the recorded/returned `inputs` keep the token, so neither the
   API response nor the UI ever sees the plaintext. The stateful execute route
-  (manual Run) is not wrapped. `sanitizeMysqlText` redacts the seed plaintexts
-  from surfaced output. See `docs/PHP_MYSQL_LOGIN.md`.
+  (manual Run) resolves no seed tokens — learners must supply real credentials
+  they discover during the exercise. `sanitizeMysqlText` redacts the seed
+  plaintexts from surfaced output. See `docs/PHP_MYSQL_LOGIN.md`.
 - **Expected outputs are client-visible by design.** Test cases ship inside the
   content bundle, which the browser already downloads. This is acceptable for a
   teaching tool, but any future *sensitive* evaluation assets (reference

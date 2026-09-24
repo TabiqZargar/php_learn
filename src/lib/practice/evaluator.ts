@@ -9,6 +9,7 @@ import type { PracticeInput, PracticeResult } from "./types";
 import type { ProgramTestCase } from "../learning/types";
 import type { EvaluationResult, EvaluationStatus, TestCaseResult } from "./evaluation.ts";
 import { matchesOutput } from "./outputMatcher.ts";
+import { sanitizePhpOutput } from "./localPhpRunner.ts";
 
 export type PracticeRunFn = (
   code: string,
@@ -100,20 +101,11 @@ function mapFailure(status: PracticeResultStatus): EvaluationStatus {
   }
 }
 
-/** Combined stdout+stderr with the throwaway script path hidden. */
+/**
+ * Combined stdout+stderr with the throwaway script path hidden.
+ */
 function diagnosticFromResult(result: PracticeResult): string | undefined {
   const combined = `${result.stdout ?? ""}${result.stderr ?? ""}`.trim();
   if (!combined) return undefined;
-  return sanitizeDiagnostic(combined);
-}
-
-/**
- * The PHP CLI prints the absolute path of the throwaway script (e.g.
- * C:\Users\...\Temp\php-academy-AbC123\program.php). The temp path is an
- * implementation detail, so only a plain filename is exposed.
- */
-function sanitizeDiagnostic(text: string): string {
-  const windowsPath = /[A-Za-z]:\\(?:[^\\\n]+\\)*php-academy-[^\\\n]*\\program\.php/g;
-  const posixPath = /\/(?:[^/\n]+\/)*php-academy-[^/\n]+\/program\.php/g;
-  return text.replace(windowsPath, "program.php").replace(posixPath, "program.php");
+  return sanitizePhpOutput(combined);
 }
