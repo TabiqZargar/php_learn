@@ -5,7 +5,6 @@ import type { CSSProperties, ReactNode } from "react";
 import type {
   AcademyWindowPayload,
   PracticeWindowPayload,
-  ReferenceWindowPayload,
   WindowId,
   WindowState,
 } from "./types";
@@ -23,11 +22,10 @@ import { Taskbar } from "../taskbar/Taskbar";
 import type { StartMenuEntry } from "../taskbar/Taskbar";
 import {
   AcademyIcon,
+  ComputerIcon,
   ProgramsIcon,
   ReferenceIcon,
-  ComputerIcon,
 } from "../icons/AppIcons";
-import type { ReferenceCategoryId } from "@/lib/reference/types";
 
 interface WindowStateWithId extends WindowState {
   id: WindowId;
@@ -41,7 +39,13 @@ const startMenuEntries: StartMenuEntry[] = [
   { id: "practice", label: "PHP Practice", icon: <ProgramsIcon size={16} /> },
 ];
 
-const WINDOW_TITLES_FROM_TYPES = WINDOW_TITLES;
+const WINDOW_ICONS: Record<WindowId, ReactNode> = {
+  academy: <AcademyIcon size={16} />,
+  programs: <ProgramsIcon size={16} />,
+  reference: <ReferenceIcon size={16} />,
+  computer: <ComputerIcon size={16} />,
+  practice: <ProgramsIcon size={16} />,
+};
 
 const DEFAULT_STYLES: Record<WindowId, CSSProperties> = {
   academy: {
@@ -57,10 +61,10 @@ const DEFAULT_STYLES: Record<WindowId, CSSProperties> = {
     top: "max(6px, calc(6vh))",
   },
   reference: {
-    width: "min(88vw, 560px)",
-    height: "min(calc(100vh - 48px), 480px)",
-    left: "max(6px, calc(50% - min(280px, 44vw)))",
-    top: "max(6px, calc(8vh))",
+    width: "min(94vw, 840px)",
+    height: "min(calc(100vh - 48px), 600px)",
+    left: "max(6px, calc(50% - min(420px, 47vw)))",
+    top: "max(6px, calc(6vh))",
   },
   computer: {
     width: "min(84vw, 420px)",
@@ -84,7 +88,6 @@ export function Desktop() {
   const [startMenuOpen, setStartMenuOpen] = useState(false);
   const [selectedIcon, setSelectedIcon] = useState<string | null>(null);
   const practiceRequestRef = useRef(0);
-  const referenceRequestRef = useRef(0);
   const lessonRequestRef = useRef(0);
 
   const openAppWindow = useCallback((id: WindowId) => {
@@ -118,20 +121,6 @@ export function Desktop() {
       ),
     );
     setActiveWindowId("practice");
-  }, []);
-
-  const openReference = useCallback((categoryId: ReferenceCategoryId) => {
-    setStartMenuOpen(false);
-    const referenceRequest = referenceRequestRef.current + 1;
-    referenceRequestRef.current = referenceRequest;
-    setWindows((current) =>
-      current.map((win) =>
-        win.id === "reference"
-          ? { ...win, minimized: false, payload: { categoryId, referenceRequest } }
-          : win,
-      ),
-    );
-    setActiveWindowId("reference");
   }, []);
 
   const openLesson = useCallback((lessonSlug: string) => {
@@ -185,16 +174,13 @@ export function Desktop() {
           />
         );
       }
-      case "reference": {
-        const payload = win.payload as ReferenceWindowPayload | undefined;
+      case "reference":
         return (
           <ReferenceWindow
-            key={payload ? `reference-${payload.categoryId}` : "static"}
-            categoryId={payload?.categoryId}
-            request={payload?.request}
+            onOpenLesson={openLesson}
+            onOpenProgram={(programSlug) => openPractice(programSlug)}
           />
         );
-      }
       case "computer":
         return (
           <PlaceholderContent
@@ -240,7 +226,7 @@ export function Desktop() {
           ))}
         </div>
 
-        <div className="windows">
+        <div className="window-layer">
           {windows.map((win) => (
             <Window
               key={win.id}
@@ -249,7 +235,7 @@ export function Desktop() {
               isMinimized={win.minimized}
               isMaximized={win.maximized}
               style={DEFAULT_STYLES[win.id]}
-              icon={WINDOW_TITLES_FROM_TYPES[win.id] ? <AcademyIcon size={16} /> : undefined}
+              icon={WINDOW_ICONS[win.id]}
               onActivate={() => activateWindow(win.id)}
               onMinimize={() =>
                 setWindows((current) =>

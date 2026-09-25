@@ -40,9 +40,9 @@ echo $greeting . " — " . $year;`,
         code: `<?php
 $user = "Tabiq";
 echo "Welcome, $user!";
-echo "You have {$user}s_points";
-echo 'Single quotes do NOT interpolate: $user';`,
-        output: "Welcome, Tabiq!You have tabbiqs_pointsSingle quotes do NOT interpolate: $user",
+echo "\\nScore: {$user}_score";
+echo "\\n" . 'Single quotes do NOT interpolate: $user';`,
+        output: "Welcome, Tabiq!\nScore: Tabiq_score\nSingle quotes do NOT interpolate: $user",
       },
     ],
     keywords: ["double quotes", "string", "embedded", "$ in string"],

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="PHP Academy">
+  <defs>
+    <linearGradient id="php-academy-fill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3f8cf5" />
+      <stop offset="0.18" stop-color="#3f8cf5" />
+      <stop offset="1" stop-color="#1b4f9c" />
+    </linearGradient>
+    <linearGradient id="php-academy-gloss" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.85" />
+      <stop offset="0.5" stop-color="#ffffff" stop-opacity="0.12" />
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0" />
+    </linearGradient>
+    <radialGradient id="php-academy-shadow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#000000" stop-opacity="0.4" />
+      <stop offset="1" stop-color="#000000" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+  <ellipse cx="24" cy="45" rx="19" ry="3.4" fill="url(#php-academy-shadow)" />
+  <rect x="5" y="4" width="38" height="38" rx="5" fill="url(#php-academy-fill)" stroke="#ffffff" stroke-opacity="0.55" stroke-width="1" />
+  <rect x="6" y="5" width="36" height="17" rx="3" fill="url(#php-academy-gloss)" />
+  <text x="24" y="31" text-anchor="middle" font-size="15" font-weight="800" font-style="italic" fill="#ffffff" stroke="#0a2a66" stroke-width="0.5" font-family="Tahoma, 'Segoe UI', sans-serif">php</text>
+</svg>

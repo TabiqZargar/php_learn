@@ -1809,6 +1809,418 @@ pre.practice-stderr {
 }
 
 /* ------------------------------------------------------------------ */
+/* PHP Reference window (category rail + read-only entry detail)        */
+/* ------------------------------------------------------------------ */
+
+.reference-body {
+  display: flex;
+  gap: 6px;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 6px;
+  overflow: hidden;
+}
+
+.reference-side {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 148px;
+  flex: 0 0 auto;
+  padding: 6px;
+  background: linear-gradient(180deg, #b1d0f0 0%, #c9e0f7 60%, #d6e7f9 100%);
+  border: 1px solid #2f6fb8;
+  border-radius: 4px;
+  overflow-y: auto;
+}
+
+.reference-side-title {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+  padding: 2px 4px 6px;
+  color: #0d3f8f;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.reference-categories {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.reference-category-button {
+  display: block;
+  width: 100%;
+  padding: 4px 6px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: transparent;
+  color: #13305e;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.reference-category-button:hover {
+  background: rgba(255, 255, 255, 0.65);
+  border-color: #7aa9de;
+}
+
+.reference-category-button:focus-visible {
+  outline: 1px dotted #0d2a54;
+  outline-offset: -2px;
+}
+
+.reference-category-button.is-active,
+.reference-category-button.is-active:hover {
+  border-color: #2a62b4;
+  background: linear-gradient(180deg, #7fb1ea 0%, #5a94dd 50%, #4078cf 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.reference-main {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  padding: 8px 10px;
+  background: #ffffff;
+  border: 1px solid var(--chrome-edge-dark);
+  border-radius: 3px;
+  box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.12);
+  overflow-y: auto;
+}
+
+.reference-search-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.reference-search-label {
+  color: #0d3f8f;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.reference-search-input {
+  flex: 1 1 160px;
+  min-width: 120px;
+  padding: 4px 6px;
+  border: 1px solid #7f9db9;
+  border-radius: 2px;
+  background: #ffffff;
+  box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.15);
+  font-size: 12px;
+  color: #1a1a1a;
+}
+
+.reference-search-input:focus {
+  outline: 1px dotted #0d2a54;
+  outline-offset: 1px;
+}
+
+.reference-result-count {
+  margin: 0;
+  color: #6a7b92;
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+
+.reference-empty {
+  margin: 4px 0;
+  padding: 10px;
+  border: 1px dashed #b9c7dc;
+  border-radius: 3px;
+  background: #f6f8fb;
+  color: #4a5a75;
+  font-size: 12px;
+}
+
+.reference-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.reference-item {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  width: 100%;
+  padding: 5px 7px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.reference-item:hover {
+  background: #f2f6fc;
+  border-color: #c4d6ee;
+}
+
+.reference-item:focus-visible {
+  outline: 1px dotted #0d2a54;
+  outline-offset: -2px;
+}
+
+.reference-item.is-selected,
+.reference-item.is-selected:hover {
+  border-color: #2a62b4;
+  background: linear-gradient(180deg, #dbe9fa 0%, #c9ddf5 100%);
+}
+
+.reference-item-name {
+  color: #12355f;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.reference-item-summary {
+  color: #55657d;
+  font-size: 11.5px;
+}
+
+.reference-copy-status {
+  min-height: 15px;
+  margin: 0;
+  color: #1e7a1e;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.reference-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid #d9dce0;
+}
+
+.reference-detail-name {
+  margin: 0;
+  color: #0d3f8f;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.reference-detail-category {
+  margin: -4px 0 0;
+  color: #6a7b92;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.reference-detail-summary {
+  margin: 0;
+  color: #233a5e;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.reference-detail-signature {
+  margin: 0;
+  padding: 5px 8px;
+  border: 1px solid #dbe1e8;
+  border-radius: 3px;
+  background: #f4f6f8;
+  font-family: var(--font-code);
+  font-size: 12.5px;
+  white-space: pre-wrap;
+}
+
+.reference-detail-description {
+  margin: 0;
+  color: #2b2b2b;
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+.reference-example {
+  margin: 0;
+  padding: 6px 8px 8px;
+  border: 1px solid #c3d3ea;
+  border-radius: 3px;
+  background: #ffffff;
+}
+
+.reference-example-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 5px;
+  color: #0d3f8f;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.reference-copy-button {
+  min-height: 22px;
+  padding: 1px 10px;
+  font-size: 11px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.reference-example-code {
+  margin: 0;
+  padding: 7px 9px;
+  border: 1px solid #d8d6cc;
+  border-radius: 3px;
+  background: #fbfbf8;
+  font-family: var(--font-code);
+  font-size: 12.5px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-x: auto;
+}
+
+.reference-example-output {
+  margin: 5px 0 0;
+  padding: 4px 7px;
+  border: 1px solid #d3e3d3;
+  border-radius: 3px;
+  background: #f2f7f2;
+  color: #24401f;
+  font-family: var(--font-code);
+  font-size: 12px;
+  white-space: pre-wrap;
+}
+
+.reference-output-label {
+  color: #1e7a1e;
+  font-family: var(--font-ui);
+  font-weight: 700;
+}
+
+.reference-notes,
+.reference-related {
+  padding: 7px 9px;
+  border: 1px solid var(--chrome-line);
+  border-radius: 3px;
+  background: linear-gradient(180deg, #fbfaf5 0%, #f3f1ea 100%);
+}
+
+.reference-notes-heading,
+.reference-related-heading {
+  margin: 0 0 4px;
+  color: #0d3f8f;
+  font-size: 11.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.reference-notes-list,
+.reference-related-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 0;
+  padding-left: 18px;
+  color: #2b2b2b;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.reference-related-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-left: 0;
+  list-style: none;
+}
+
+.reference-related-button {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 3px 10px;
+  border: 1px solid #9fb8dc;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #ffffff 0%, #dbe7f5 100%);
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.9);
+  text-align: left;
+  cursor: pointer;
+}
+
+.reference-related-button:hover:not(:disabled) {
+  background: linear-gradient(180deg, #eef4fb 0%, #cfe0f2 100%);
+  border-color: #7c9fd0;
+}
+
+.reference-related-button:focus-visible {
+  outline: 1px dotted #000;
+  outline-offset: -2px;
+}
+
+.reference-related-button:disabled {
+  background: #f2f1eb;
+  border-color: var(--chrome-line);
+  cursor: default;
+}
+
+.reference-related-kind {
+  flex: 0 0 auto;
+  min-width: 52px;
+  color: #6a7b92;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.reference-related-title {
+  color: #12355f;
+  font-size: 12px;
+}
+
+.reference-keywords {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0;
+  color: #55657d;
+  font-size: 11.5px;
+}
+
+.reference-keywords-label {
+  color: #0d3f8f;
+  font-weight: 700;
+}
+
+.reference-keyword {
+  padding: 1px 6px;
+  border: 1px solid #cfcfca;
+  border-radius: 3px;
+  background: #f5f5f2;
+  font-family: var(--font-code);
+  color: #7a2d2d;
+}
+
+/* ------------------------------------------------------------------ */
 /* Code editor                                                          */
 /* ------------------------------------------------------------------ */
 

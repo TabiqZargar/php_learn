@@ -1,107 +1,111 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import type { ReferenceCategoryId, ReferenceEntry } from "@/lib/reference/types";
-import { getReferenceCategoryLabel } from "@/content/reference/categories";
-import { REFERENCE_CATEGORIES } from "@/content/reference/categories";
+import {
+  REFERENCE_CATEGORIES,
+  getReferenceCategoryLabel,
+} from "@/content/reference/categories";
 import { REFERENCE_ENTRIES } from "@/content/reference";
+import { getRelatedCurriculumForCategory } from "@/content/reference/lessonLinks";
+import { getLessonBySlug, getProgramBySlug } from "@/content";
 import { searchReference } from "@/lib/reference/search";
 import { ReferenceIcon } from "@/components/icons/AppIcons";
 
 export interface ReferenceWindowProps {
-  /** Category to show on open (deep link from a lesson or program). */
-  categoryId?: ReferenceCategoryId;
-  /** Bumped when a related lesson/program deep-links here again. */
-  request?: number;
+  /** Opens a related lesson in the Academy window. */
+  onOpenLesson?: (lessonSlug: string) => void;
+  /** Opens a related practice program in the practice window. */
+  onOpenProgram?: (programSlug: string) => void;
 }
 
 const EMPTY_QUERY = "";
+const COPY_RESET_MS = 1600;
 
 /**
- * Small "copy example" affordance: copying only the code (never the output),
- * showing a temporary "Copied" state)Skip a window that uses the same
- * read-only code rendering as the rest of the sandbox. Copy failures degrade
- * gracefully — see ReferenceDetail's use of navigator.clipboard.
+ * The PHP Reference window: a category sidebar, a client-side search box and a
+ * read-only detail view for one entry. Examples are never run here — they are
+ * authored snippets shown verbatim, with an optional output line beneath, so
+ * the reference stays a read-only companion to the practice window.
+ *
+ * Copying is the only action an example offers, and it copies the code only
+ * (never the output). It degrades gracefully: if the clipboard API is missing
+ * or rejects, a short status line explains that instead of failing silently.
+ * The detail view also lists the lessons and programs that cover the entry's
+ * category, which the desktop wires to its own lesson/practice windows.
  */
-export function ReferenceWindow({ categoryId, request }: ReferenceWindowProps) {
+export function ReferenceWindow({
+  onOpenLesson,
+  onOpenProgram,
+}: ReferenceWindowProps) {
   const [query, setQuery] = useState(EMPTY_QUERY);
-  const [copied, setCopied] = useState(false);
-  const [copyFailed, setCopyFailed] = useState(false);
+  const [activeCategoryId, setActiveCategoryId] = useState<ReferenceCategoryId | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const [copyStatus, setCopyStatus] = useState<string | null>(null);
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchRef = useRef<HTMLInputElement | null>(null);
 
-  // Deep link: an outside click (lesson/program → PHP Reference) sets the
-  // category and bumps `request`, remounting this window so repeated clicks on
-  // the same entry still re-open it cleanly — same contract the academy window
-  // uses for lessons.
-  const [activeCategoryId, setActiveCategoryId] = useState<ReferenceCategoryId | null>(
-    categoryId ?? null,
-  );
+  useEffect(() => {
+    return () => {
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+    };
+  }, []);
 
   const handleCopy = async (code: string) => {
+    setCopyStatus(null);
     if (typeof navigator === "undefined" || !navigator.clipboard) {
-      setCopyFailed(true);
+      setCopyStatus("Copy is unavailable in this browser.");
       return;
     }
     try {
       await navigator.clipboard.writeText(code);
-      setCopied(true);
-      setCopyFailed(false);
+      setCopiedCode(code);
+      setCopyStatus("Copied to clipboard.");
       if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
-      copyTimerRef.current = setTimeout(() => setCopied(false), 1600);
+      copyTimerRef.current = setTimeout(() => setCopiedCode(null), COPY_RESET_MS);
     } catch {
-      setCopyFailed(true);
+      setCopyStatus("Copy failed. Select the code and copy it manually.");
     }
   };
 
-  const trimmedQuery = query.trim().toLowerCase();
+  const trimmedQuery = query.trim();
   const filtered = useMemo(() => {
     if (trimmedQuery.length === 0) {
       return activeCategoryId === null
         ? REFERENCE_ENTRIES
-        : REFERENCE_ENTRIES.filter((e) => e.categoryId === activeCategoryId);
+        : REFERENCE_ENTRIES.filter((entry) => entry.categoryId === activeCategoryId);
     }
     return searchReference(REFERENCE_ENTRIES, trimmedQuery, getReferenceCategoryLabel);
   }, [trimmedQuery, activeCategoryId]);
 
-  const categories = REFERENCE_CATEGORIES;
-
-  const onSearchKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && filtered.length > 0) {
-      setSelectedId(filtered[0].id);
-    }
-  };
-
-  const [selectedId, setSelectedId] = useState<string | null>(null);
   const selectedEntry =
     selectedId === null
       ? null
-      : (filtered.find((e) => e.id === selectedId) ?? null);
+      : (filtered.find((entry) => entry.id === selectedId) ?? null);
+
+  const onSearchKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter") {
+      const first = filtered[0];
+      if (first) setSelectedId(first.id);
+    }
+  };
+
+  const onSelectCategory = (next: ReferenceCategoryId | null) => {
+    setActiveCategoryId(next);
+    setSelectedId(null);
+    searchRef.current?.focus();
+  };
 
   return (
     <div className="reference-body">
       <aside className="reference-side">
-        <p className="reference-section-label">Categories</p>
+        <p className="reference-side-title">
+          <ReferenceIcon size={14} />
+          <span>Categories</span>
+        </p>
         <ul className="reference-categories">
-          {categories.map((cat) => (
-            <li key={cat.id}>
-              <button
-                type="button"
-                className={[
-                  "reference-category-button",
-                  activeCategoryId === cat.id ? "is-active" : "",
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
-                aria-pressed={activeCategoryId === cat.id}
-                aria-current={activeCategoryId === cat.id ? "true" : undefined}
-                onClick={() => setActiveCategoryId(cat.id)}
-              >
-                {cat.label}
-              </button>
-            </li>
-          ))}
           <li>
             <button
               type="button"
@@ -112,11 +116,28 @@ export function ReferenceWindow({ categoryId, request }: ReferenceWindowProps) {
                 .filter(Boolean)
                 .join(" ")}
               aria-pressed={activeCategoryId === null}
-              onClick={() => setActiveCategoryId(null)}
+              onClick={() => onSelectCategory(null)}
             >
               All categories
             </button>
           </li>
+          {REFERENCE_CATEGORIES.map((category) => (
+            <li key={category.id}>
+              <button
+                type="button"
+                className={[
+                  "reference-category-button",
+                  activeCategoryId === category.id ? "is-active" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                aria-pressed={activeCategoryId === category.id}
+                onClick={() => onSelectCategory(category.id)}
+              >
+                {category.label}
+              </button>
+            </li>
+          ))}
         </ul>
       </aside>
 
@@ -131,24 +152,23 @@ export function ReferenceWindow({ categoryId, request }: ReferenceWindowProps) {
             className="reference-search-input"
             type="search"
             value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
+            placeholder="e.g. foreach, strlen, count"
+            onChange={(event) => {
+              setQuery(event.target.value);
               setSelectedId(null);
             }}
-            placeholder="e.g. foreach, strlen, count"
-            aria-label="Search PHP Reference"
+            onKeyDown={onSearchKeyDown}
           />
+          <p className="reference-result-count" aria-live="polite">
+            {filtered.length} {filtered.length === 1 ? "entry" : "entries"}
+          </p>
         </div>
-
-        <p className="reference-result-count" aria-live="polite">
-          {filtered.length} {filtered.length === 1 ? "entry" : "entries"}
-        </p>
 
         {filtered.length === 0 ? (
           <p className="reference-empty">
             {trimmedQuery.length > 0
-              ? `No entries match "${query.trim()}".`
-              : "Pick a category to see its entries."}
+              ? `No entries match "${trimmedQuery}".`
+              : "No entries in this category yet."}
           </p>
         ) : (
           <ul className="reference-list">
@@ -173,11 +193,17 @@ export function ReferenceWindow({ categoryId, request }: ReferenceWindowProps) {
           </ul>
         )}
 
+        <p className="reference-copy-status" role="status">
+          {copyStatus}
+        </p>
+
         {selectedEntry ? (
           <ReferenceDetail
             entry={selectedEntry}
-            copied={copied}
+            copiedCode={copiedCode}
             onCopy={handleCopy}
+            onOpenLesson={onOpenLesson}
+            onOpenProgram={onOpenProgram}
           />
         ) : null}
       </div>
@@ -187,16 +213,31 @@ export function ReferenceWindow({ categoryId, request }: ReferenceWindowProps) {
 
 function ReferenceDetail({
   entry,
-  copied,
+  copiedCode,
   onCopy,
+  onOpenLesson,
+  onOpenProgram,
 }: {
   entry: ReferenceEntry;
-  copied: boolean;
+  copiedCode: string | null;
   onCopy: (code: string) => void;
+  onOpenLesson?: (lessonSlug: string) => void;
+  onOpenProgram?: (programSlug: string) => void;
 }) {
+  const related = getRelatedCurriculumForCategory(entry.categoryId);
+  const relatedLessons = related.lessons
+    .map((slug) => getLessonBySlug(slug))
+    .filter((lesson): lesson is NonNullable<typeof lesson> => lesson !== undefined);
+  const relatedPrograms = related.programs
+    .map((slug) => getProgramBySlug(slug))
+    .filter((program): program is NonNullable<typeof program> => program !== undefined);
+
   return (
     <article className="reference-detail">
       <h2 className="reference-detail-name">{entry.name}</h2>
+      <p className="reference-detail-category">
+        {getReferenceCategoryLabel(entry.categoryId)}
+      </p>
       {entry.summary ? <p className="reference-detail-summary">{entry.summary}</p> : null}
       {entry.signature ? (
         <pre className="reference-detail-signature">
@@ -206,16 +247,16 @@ function ReferenceDetail({
       {entry.description ? (
         <p className="reference-detail-description">{entry.description}</p>
       ) : null}
-      {entry.examples.map((example, i) => (
-        <figure className="reference-example" key={i}>
+      {entry.examples.map((example, index) => (
+        <figure className="reference-example" key={index}>
           <figcaption className="reference-example-head">
-            <span>Example {i + 1}</span>
+            <span>Example {index + 1}</span>
             <button
               type="button"
               className="reference-copy-button xp-button"
               onClick={() => onCopy(example.code)}
             >
-              {copied ? "Copied" : "Copy"}
+              {copiedCode === example.code ? "Copied" : "Copy"}
             </button>
           </figcaption>
           <pre className="reference-example-code">
@@ -229,12 +270,55 @@ function ReferenceDetail({
           ) : null}
         </figure>
       ))}
+      {entry.notes && entry.notes.length > 0 ? (
+        <section className="reference-notes" aria-label="Notes">
+          <h3 className="reference-notes-heading">Notes</h3>
+          <ul className="reference-notes-list">
+            {entry.notes.map((note) => (
+              <li key={note}>{note}</li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+      {relatedLessons.length > 0 || relatedPrograms.length > 0 ? (
+        <section className="reference-related" aria-label="Related curriculum">
+          <h3 className="reference-related-heading">Learn this in the Academy</h3>
+          <ul className="reference-related-list">
+            {relatedLessons.map((lesson) => (
+              <li key={`lesson-${lesson.slug}`}>
+                <button
+                  type="button"
+                  className="reference-related-button"
+                  disabled={!onOpenLesson}
+                  onClick={() => onOpenLesson?.(lesson.slug)}
+                >
+                  <span className="reference-related-kind">Lesson</span>
+                  <span className="reference-related-title">{lesson.title}</span>
+                </button>
+              </li>
+            ))}
+            {relatedPrograms.map((program) => (
+              <li key={`program-${program.slug}`}>
+                <button
+                  type="button"
+                  className="reference-related-button"
+                  disabled={!onOpenProgram || !program.practice}
+                  onClick={() => onOpenProgram?.(program.slug)}
+                >
+                  <span className="reference-related-kind">Program</span>
+                  <span className="reference-related-title">{program.title}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
       {entry.keywords && entry.keywords.length > 0 ? (
         <p className="reference-keywords">
           <span className="reference-keywords-label">Keywords</span>{" "}
-          {entry.keywords.map((k) => (
-            <span key={k} className="reference-keyword">
-              {k}
+          {entry.keywords.map((keyword) => (
+            <span key={keyword} className="reference-keyword">
+              {keyword}
             </span>
           ))}
         </p>

@@ -84,7 +84,7 @@ echo "cookie set";`,
     summary: "Cookies sent by the visitor's browser.",
     signature: "$_COOKIE[\"name\"]",
     description:
-      "Populated automatically from the browser's cookies. Read it like any array. Remember: cookies travel with every requestading, so never store secrets there.",
+      "Populated automatically from the browser's cookies. Read it like any array. Remember: cookies travel with every request, so never store secrets there.",
     examples: [
       {
         code: `<?php

@@ -12,15 +12,15 @@ export const REFERENCE_ENTRIES_AUTHENTICATION: readonly ReferenceEntry[] = [
     examples: [
       {
         code: `<?php
-$hash = password_hash("my-secret-pass", PASSWORD_DEFAULT                     );
-echo (strlen($hash) >= 60 ? "long hash" : "hash");
-// Output shown is illustrative; every call returns a different hash.`,
-        output: "long hash",
+$hash = password_hash("correct horse battery", PASSWORD_DEFAULT);
+echo strlen($hash) >= 60 ? "60+ char hash" : "unexpected";`,
+        output: "60+ char hash",
       },
     ],
     notes: [
       "Never store plain passwords. Store only the hash.",
       "password_hash() output is safe to store in a VARCHAR(255) column.",
+      "Every call returns a different string for the same password, because the salt is random.",
     ],
     keywords: ["bcrypt", "hash", "salt", "secure", "crypt", "hashing"],
   },
@@ -35,8 +35,8 @@ echo (strlen($hash) >= 60 ? "long hash" : "hash");
     examples: [
       {
         code: `<?php
-$stored = password_hash("my-secret-pass", PASSWORD_DEFAULT);
-echo password_verify("my-secret-pass", $stored) ? "match" : "no match";
+$stored = password_hash("correct horse battery", PASSWORD_DEFAULT);
+echo password_verify("correct horse battery", $stored) ? "match" : "no match";
 echo " " . (password_verify("wrong", $stored) ? "match" : "no match");`,
         output: "match no match",
       },
@@ -50,7 +50,7 @@ echo " " . (password_verify("wrong", $stored) ? "match" : "no match");`,
     summary: "The standard pattern: session_start, read form, verify hash, mark $_SESSION.",
     signature: "session_start();  +  password_verify()  +  $_SESSION['user_id']",
     description:
-      "The Academy's login program uses one idea you can reuse anywhere: seed a users table, then compare a submitted password with its hash. On success save the user id in the session and redirect; on failure show a generic error. Never reveal which part was wrong.",
+      "The pattern to reuse for any login form: store a users table of hashes, then compare a submitted password with the stored hash. On success save the user id in the session and redirect; on failure show a generic error. Never reveal which part was wrong.",
     examples: [
       {
         code: `<?php
@@ -58,13 +58,16 @@ session_start();
 $username = $_POST['username'] ?? '';
 $password = $_POST['password'] ?? '';
 
-// $row = SELECT hash FROM users WHERE username = ?   (prepared statement)
+// Prepared statement: SELECT id, hash FROM users WHERE username = ?
+// fetch_assoc() returns null when no such user exists.
+$row = null;
+
 if ($row && password_verify($password, $row['hash'])) {
     $_SESSION['user_id'] = $row['id'];
     header('Location: dashboard.php');
-} else {
-    echo 'Invalid credentials';
-}`,
+    exit;
+}
+echo 'Invalid credentials';`,
         output: "Invalid credentials",
       },
     ],

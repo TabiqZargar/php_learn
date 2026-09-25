@@ -59,7 +59,7 @@ echo file_get_contents("log.txt");`,
     keywords: ["write file", "save", "append", "FILE_APPEND", "shortcut"],
   },
   {
-    id: "file-함수",
+    id: "file",
     name: "file()",
     categoryId: "files",
     summary: "Read a whole file into an array of lines.",

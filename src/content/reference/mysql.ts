@@ -9,19 +9,27 @@ export const REFERENCE_ENTRIES_MYSQL: readonly ReferenceEntry[] = [
     signature:
       "mysqli_connect(?string $hostname, ?string $username, ?string $password, ?string $database): mysqli|false",
     description:
-      "Returns a connection object you pass to every later mysqli call. Supply the host, user, password and (optionally) the database. In modern PHP use the object-oriented form: new mysqli(...).",
+      "Returns a connection object you pass to every later mysqli call. Supply the host, user, password and (optionally) the database. In modern PHP use the object-oriented form: new mysqli(...). Read the credentials from configuration or the environment rather than hard-coding them in the file.",
     examples: [
       {
         code: `<?php
-$conn = new mysqli("localhost", "root", "secret", "academy");
-if ($conn->connect_error) {
+$config = require "db_config.php";
+
+$conn = new mysqli(
+    $config["host"],
+    $config["user"],
+    $config["password"],
+    $config["database"]
+);
+
+if ($conn->connect_errno) {
     die("Connection failed");
 }
 echo "connected";`,
         output: "connected",
       },
     ],
-    keywords: ["connect", "database connection", "new mysqli", "host", "server"],
+    keywords: ["connect", "database connection", "new mysqli", "host", "server", "config"],
   },
   {
     id: "mysqli_prepare",
@@ -39,7 +47,7 @@ echo $stmt ? "prepared" : "failed";`,
         output: "prepared",
       },
     ],
-    keywords: ["parameterized", "placeholder", "spreliminary", "injection safe", "stmt"],
+    keywords: ["parameterized", "placeholder", "injection safe", "stmt"],
   },
   {
     id: "mysqli_stmt_bind_param",

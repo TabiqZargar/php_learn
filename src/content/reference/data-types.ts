@@ -8,7 +8,7 @@ export const REFERENCE_ENTRIES_DATA_TYPES: readonly ReferenceEntry[] = [
     summary: "A sequence of characters, quoted single or double.",
     signature: "\"text\"  |  'text'",
     description:
-      "Strings hold text. Double quotes interpolate variables, single quotes print the source literally. Strings are measured in characters with strlen().",
+      "Strings hold text. Double quotes interpolate variables, single quotes print the source literally. strlen() counts bytes, so multi-byte text is measured with mb_strlen().",
     examples: [
       {
         code: `<?php
@@ -70,10 +70,10 @@ echo " " . (2.5 * 2);`,
       {
         code: `<?php
 $isReady = true;
-$isReady = (10 > 3);   // true
+$count = 0;
 echo $isReady ? "yes" : "no";
-echo " " . (bool) 0; // false prints as nothing`,
-        output: "yes ",
+echo " " . ($count ? "non-empty" : "empty");`,
+        output: "yes empty",
       },
     ],
     keywords: ["bool", "true", "false", "truthy"],
