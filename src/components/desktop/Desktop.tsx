@@ -165,9 +165,7 @@ export function Desktop() {
           <AcademyWindow
             key={payload ? `lesson-${payload.lessonRequest}` : "static"}
             initialLessonSlug={payload?.lessonSlug}
-            initialLessonRequest={payload?.lessonRequest}
             onOpenPractice={(program) => openPractice(program.slug)}
-            onOpenReference={(categoryId) => openReference(categoryId)}
           />
         );
       }
@@ -175,7 +173,6 @@ export function Desktop() {
         return (
           <ProgramsWindow
             onOpenPractice={(program) => openPractice(program.slug)}
-            onOpenReference={(categoryId) => openReference(categoryId)}
           />
         );
       case "practice": {
@@ -183,9 +180,8 @@ export function Desktop() {
         return (
           <PracticeWindow
             key={payload ? `practice-${payload.programSlug}` : "static"}
-            initialProgramSlug={payload?.programSlug}
+            programSlug={payload?.programSlug}
             onOpenLesson={openLesson}
-            onOpenReference={(categoryId) => openReference(categoryId)}
           />
         );
       }
@@ -195,7 +191,7 @@ export function Desktop() {
           <ReferenceWindow
             key={payload ? `reference-${payload.categoryId}` : "static"}
             categoryId={payload?.categoryId}
-            request={payload?.referenceRequest}
+            request={payload?.request}
           />
         );
       }
@@ -238,7 +234,7 @@ export function Desktop() {
                 icon={icon.icon}
                 selected={selectedIcon === icon.id}
                 onSelect={() => setSelectedIcon(icon.id)}
-                onActivate={() => openAppWindow(icon.id)}
+                onActivate={() => openAppWindow(icon.id as WindowId)}
               />
             </div>
           ))}
@@ -248,7 +244,6 @@ export function Desktop() {
           {windows.map((win) => (
             <Window
               key={win.id}
-              id={win.id}
               title={win.title}
               isActive={activeWindowId === win.id}
               isMinimized={win.minimized}
@@ -292,6 +287,7 @@ export function Desktop() {
         startMenuEntries={startMenuEntries}
         onToggleStartMenu={() => setStartMenuOpen((open) => !open)}
         onOpenFromStartMenu={(id) => openAppWindow(id)}
+        onCloseStartMenu={() => setStartMenuOpen(false)}
         onActivateWindow={activateWindow}
       />
     </div>
