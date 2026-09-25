@@ -83,7 +83,7 @@ export function Desktop() {
   const [activeWindowId, setActiveWindowId] = useState<WindowId | null>("academy");
   const [startMenuOpen, setStartMenuOpen] = useState(false);
   const [selectedIcon, setSelectedIcon] = useState<string | null>(null);
-  const practiceRequestRef = useRef(0TryKey);
+  const practiceRequestRef = useRef(0);
   const referenceRequestRef = useRef(0);
   const lessonRequestRef = useRef(0);
 
